@@ -4,45 +4,20 @@
 #
 # Usage:
 #     lesson <num>
+#
+# Dependencies:
+#     ~/.bash_lib
 
-# Variable Definitions
+# Import code from ~/.bashlib file
+if [[ -f $BASH_LIB ]]; then
+	. $BASH_LIB
+else
+	echo "Unable to find '$BASH_LIB' file. Please install it and run again"
+	exit 1
+fi
 
 MAX_LESSON_NUM=100
 LESSONS_DIR="Lessons"
-
-# Function Definitions
-
-# Prompt user if to proceed or not. 
-proceed() {
-	echo -n "Proceed? [y/n]: "
-	read ANS
-	if [[ ! "$ANS" =~ ^[yY][eE]?[sS]?$ ]]; then
-			exit 0
-	fi
-}
-
-# Returns text highlighted with white background
-reversed() {
-	echo "\033[7m$1\033[0m"
-}
-
-# Returns text in green color
-green() {
-	echo "\033[0;32m$1\033[0m"
-}
-
-# Reports an error in red color and exits the program
-error() {
-	printf "\033[1;31mError:\033[0m $1\n"
-	exit 1
-}
-
-# Reports a warning in yellow
-warning() {
-	printf "\033[1;33mWarning:\033[0m $1\n"
-}
-
-# Main part of the Script
 
 # Check if <num> argument was given
 if [[ $# -ne 1 ]]; then
