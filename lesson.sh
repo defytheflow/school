@@ -1,12 +1,21 @@
 #!/bin/bash
 
-# Generates a default directory structure for a lesson.
-#
-# Usage:
-#     lesson <num>
-#
-# Dependencies:
-#     ~/.bash_lib
+MAX_LESSON_NUM=100 
+LESSONS_DIR="Lessons"
+
+# How to use this script
+usage() {
+	echo "Generates a default directory structure for a lesson."
+	echo ""
+	echo "Usage:"
+	echo -e "  lesson [options] <num>"
+	echo ""
+	echo "Options:"
+	echo -e "  -h, --help    shows a help message" 
+	echo ""
+	echo "Dependencies:"
+	echo -e "  ~/.bash_lib"
+}
 
 # Import code from ~/.bashlib file
 if [[ -f $BASH_LIB ]]; then
@@ -16,13 +25,23 @@ else
 	exit 1
 fi
 
-MAX_LESSON_NUM=100
-LESSONS_DIR="Lessons"
-
 # Check if <num> argument was given
-if [[ $# -ne 1 ]]; then
+if [[ $# -lt 1 ]]; then
+	usage
+	echo ""
 	error "Missing <num> argument"
 fi
+
+# Check if an option was provided
+for arg in $@; do
+	if [[ "$arg" =~ ^-[-]?[a-zA-Z]+$ ]]; then
+		case $arg in 
+			-h | --help )
+				usage
+				exit 0
+		esac;
+	fi	   
+done
 
 # Check if <num> argument is an integer
 if [[ ! "$1" =~ ^[0-9]+$ ]]; then
