@@ -1,5 +1,7 @@
 #!/bin/bash
 
+BASH_LIB=~/.bash_lib
+
 MAX_LESSON_NUM=100 
 LESSONS_DIR="Lessons"
 
@@ -8,28 +10,23 @@ usage() {
 	echo "Generates a default directory structure for a lesson."
 	echo ""
 	echo "Usage:"
-	echo -e "  lesson [options] <num>"
+	echo "  lesson [options] <num>"
 	echo ""
 	echo "Options:"
-	echo -e "  -h, --help    shows a help message" 
+	echo "  -h, --help    shows a help message" 
 	echo ""
 	echo "Dependencies:"
-	echo -e "  ~/.bash_lib"
+	echo "  bash_lib"
+	echo "  figlet"
+	echo "  lolcat"
 }
 
-# Import code from ~/.bashlib file
+# Import code from ~/.bash_lib file
 if [[ -f $BASH_LIB ]]; then
 	. $BASH_LIB
 else
 	echo "Unable to find '$BASH_LIB' file. Please install it and run again"
 	exit 1
-fi
-
-# Check if <num> argument was given
-if [[ $# -lt 1 ]]; then
-	usage
-	echo ""
-	error "Missing <num> argument"
 fi
 
 # Check if an option was provided
@@ -39,13 +36,24 @@ for arg in $@; do
 			-h | --help )
 				usage
 				exit 0
-		esac;
+				;;
+			* )
+				fatal_error "Unknown option $(reversed $arg)"
+				;;
+		esac
 	fi	   
 done
 
+# Check if <num> argument was given
+if [[ $# -lt 1 ]]; then
+	usage
+	echo ""
+	fatal_error "Missing <num> argument"
+fi
+
 # Check if <num> argument is an integer
 if [[ ! "$1" =~ ^[0-9]+$ ]]; then
-	error "<num> argument must be an integer"
+	fatal_error "<num> argument must be an integer"
 fi
 
 # Check if <num> argument is less than or equal MAX_LESSON_NUM
@@ -56,8 +64,7 @@ fi
 
 # Check if there is already a Lesson with number <num>
 if [[ -d $1 ]]; then
-	error "Lesson number $(reversed $1) already exists"
-	exit 1
+	fatal_error "Lesson number $(reversed $1) already exists"
 fi
 
 # Check if inside of LESSONS_DIR directory
@@ -67,13 +74,15 @@ if [[ ! "$(pwd)" =~ .+/$LESSONS_DIR$ ]]; then
 fi
 # Check if figlet program is installed
 if [[ ! -x "$(command -v figlet)" ]]; then
-	error "$(reversed "figlet") is not installed. Please install it and run again."
+	fatal_error "$(reversed "figlet") is not installed. Please install it and run again."
 fi
 
 # Check if lolcat program is installed
 if [[ ! -x "$(command -v lolcat)" ]]; then
-	error "$(reversed "lolcat") is not installed. Please install it and run again."
+	fatal_error "$(reversed "lolcat") is not installed. Please install it and run again."
 fi
+
+# The main job starts here
 
 # Create the Lesson layout
 mkdir $1
