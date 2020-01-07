@@ -151,6 +151,14 @@ for (( i = 1; i < ARGC; ++i )); do
 		continue
 	fi
 
+	# Check if c_source can be compiled to make sure there is no syntax mistakes
+	gcc -c $c_source > /dev/null 2>&1 # Supress output from command
+	if [[ $? -ne 0 ]]; then
+		error "$(reversed $c_source) does not compile."
+		continue
+	fi
+	rm ${c_source%.c}.o
+
 	if [[ $VAR_FLAG == 1 ]]; then
 		echo "do var"
 	elif [[ $MACRO_FLAG == 1 ]]; then
@@ -160,5 +168,9 @@ for (( i = 1; i < ARGC; ++i )); do
 	fi
 
 done
+
+if [[ $NUM_ERRORS -eq 0 ]]; then
+	echo "$(green "Looking Good!")"
+fi
 
 exit 0
