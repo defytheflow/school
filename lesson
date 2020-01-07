@@ -1,6 +1,7 @@
 #!/bin/bash
 
-BASH_LIB=~/.bash_lib
+BASH_LIB=$HOME/.bash_lib
+BASH_LIB_REP="https://github.com/defytheflow/dotfiles.git"
 
 MAX_LESSON_NUM=100 
 LESSONS_DIR="Lessons"
@@ -25,8 +26,29 @@ usage() {
 if [[ -f $BASH_LIB ]]; then
 	. $BASH_LIB
 else
-	echo "Unable to find '$BASH_LIB' file. Please install it and run again"
-	exit 1
+	echo "Unable to find '$BASH_LIB' file."
+	
+	# Ask if user wants to download the .bash_lib file
+	echo -n "Download now? [y/n] "
+	read ANS
+	if [[ ! "$ANS" =~ ^[yY][eE]?[sS]? ]]; then
+		exit 0;
+	fi
+
+	# Check if git is installed
+	if [[ ! -x "$(command -v git)" ]]; then
+		error "$(reversed git) is not installed."
+		ask "Install now"
+		sudo apt-get install git
+		clear
+	fi
+
+	# Download and move to home directory
+	git clone $BASH_LIB_REP
+	mv dotfiles/.bash_lib $HOME/
+	rm -rf dotfiles
+	echo "Download complete. Please run again"
+	exit 0
 fi
 
 # Check if an option was provided
@@ -59,7 +81,7 @@ fi
 # Check if <num> argument is less than or equal MAX_LESSON_NUM
 if [[ ! "$1" -le $MAX_LESSON_NUM ]]; then
 	warning "$1 exceed the MAX_LESSON_NUM"
-	proceed
+	ask "Proceed"
 fi
 
 # Check if there is already a Lesson with number <num>
@@ -70,16 +92,22 @@ fi
 # Check if inside of LESSONS_DIR directory
 if [[ ! "$(pwd)" =~ .+/$LESSONS_DIR$ ]]; then
 	warning "Not inside $(reversed $LESSONS_DIR) directory"
-	proceed
+	ask "Proceed"
 fi
 # Check if figlet program is installed
 if [[ ! -x "$(command -v figlet)" ]]; then
-	fatal_error "$(reversed "figlet") is not installed. Please install it and run again."
+	error "$(reversed "figlet") is not installed."
+	ask "Install now"
+	sudo apt-get install figlet
+	clear
 fi
 
 # Check if lolcat program is installed
 if [[ ! -x "$(command -v lolcat)" ]]; then
-	fatal_error "$(reversed "lolcat") is not installed. Please install it and run again."
+	error "$(reversed "lolcat") is not installed."
+	ask "Install now"
+	sudo apt-get install lolcat
+	clear
 fi
 
 # The main job starts here
