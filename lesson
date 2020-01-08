@@ -38,13 +38,14 @@ if [[ -f $BASH_LIB ]]; then
 		
 		echo -n "Update now? [y/n] "
 		read ANS
-		if [[ ! "$ANS" =~ ^[yY][eE]?[sS]? ]]; then
-			exit 0;
+		if [[ "$ANS" =~ ^[yY][eE]?[sS]? ]]; then
+			download_bash_lib
+			echo "Update complete. Please run again."
+			exit 0
+		else	
+			. $BASH_LIB
 		fi
-		
-		download_bash_lib
-		echo "Update complete. Please run again."
-		exit 0
+
 	else
 		. $BASH_LIB
 	fi 
@@ -136,6 +137,6 @@ mkdir $1/Whiteboard
 mkdir $1/Programs
 mkdir $1/Homework
 
-figlet "Lesson $1" | lolcat
+figlet -c "$(whoami) Lesson $1" | lolcat
 
 exit 0
