@@ -39,15 +39,14 @@ else
 	if [[ ! -x "$(command -v git)" ]]; then
 		error "$(reversed git) is not installed."
 		ask "Install now"
-		sudo apt-get install git
-		clear
+		sudo apt-get install git > /dev/null 2>&1
 	fi
 
 	# Download and move to home directory
-	git clone $BASH_LIB_REP
+	git clone $BASH_LIB_REP > /dev/null 2>&1
 	mv dotfiles/.bash_lib $HOME/
 	rm -rf dotfiles
-	echo "Download complete. Please run again"
+	echo "Download complete. Please run again."
 	exit 0
 fi
 
@@ -98,19 +97,15 @@ fi
 if [[ ! -x "$(command -v figlet)" ]]; then
 	error "$(reversed "figlet") is not installed."
 	ask "Install now"
-	sudo apt-get install figlet
-	clear
+	sudo apt-get install figlet > /dev/null 2>&1
 fi
 
 # Check if lolcat program is installed
 if [[ ! -x "$(command -v lolcat)" ]]; then
 	error "$(reversed "lolcat") is not installed."
 	ask "Install now"
-	sudo apt-get install lolcat
-	clear
+	sudo apt-get install lolcat > /dev/null 2>&1
 fi
-
-# The main job starts here
 
 # Create the Lesson layout
 mkdir $1
@@ -122,3 +117,5 @@ mkdir $1/Programs
 mkdir $1/Homework
 
 figlet "Lesson $1" | lolcat
+
+exit 0
