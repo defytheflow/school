@@ -22,9 +22,32 @@ usage() {
 	echo "  lolcat"
 }
 
-# Import code from ~/.bash_lib file
+# Download BASH_LIB and move to home directory
+download_bash_lib() {
+	git clone $BASH_LIB_REP > /dev/null 2>&1
+	mv dotfiles/.bash_lib $HOME/
+	rm -rf dotfiles
+}
+
+# Try to import code from ~/.bash_lib file
 if [[ -f $BASH_LIB ]]; then
-	. $BASH_LIB
+
+	# Check if $BASH_LIB is up-to-date
+	if [[ $0 -nt $BASH_LIB ]]; then
+		echo "You might need to update the $BASH_LIB file"
+		
+		echo -n "Update now? [y/n] "
+		read ANS
+		if [[ ! "$ANS" =~ ^[yY][eE]?[sS]? ]]; then
+			exit 0;
+		fi
+		
+		download_bash_lib
+		echo "Update complete. Please run again."
+		exit 0
+	else
+		. $BASH_LIB
+	fi 
 else
 	echo "Unable to find '$BASH_LIB' file."
 	
@@ -42,10 +65,7 @@ else
 		sudo apt-get install git > /dev/null 2>&1
 	fi
 
-	# Download and move to home directory
-	git clone $BASH_LIB_REP > /dev/null 2>&1
-	mv dotfiles/.bash_lib $HOME/
-	rm -rf dotfiles
+	download_bash_lib
 	echo "Download complete. Please run again."
 	exit 0
 fi
