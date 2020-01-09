@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Dependencies
 INSTALL="install"
 BASH_LIB=$HOME/.bash_lib
 
@@ -20,13 +21,18 @@ usage() {
 	echo "Usage:"
 	echo "  lesson [options] <command>"
 	echo ""
-	echo "Commands:"
-	echo "  begin  <num>     creates the directories for the lesson"
-	echo "  end    <num>     removes unused directories for the lesson"
-	echo ""
 	echo "Options:"
 	echo "  -h, --help       displays a help message" 
 	echo "  -v, --verbose    displays what directories are being created"
+	echo ""
+	echo "Commands:"
+	echo "  begin  <lesson_num>     creates the directories for the lesson"
+	echo "  end    <lesson_num>     removes unused directories for the lesson"
+	echo "  help                    displays a help message"
+	echo ""
+	echo "Examples:"
+	echo "  lesson begin 1"
+	echo "  lesson end 1"
 	echo ""
 	echo "Dependencies:"
 	echo "  bash_lib"
@@ -36,29 +42,25 @@ usage() {
 
 # Check if $BASH_LIB file is present
 if [[ ! -f $BASH_LIB ]]; then
-	echo  "Unable to find the '$BASH_LIB' file."
-	echo  "Please run the '$INSTALL' script."
+	echo "Error: File not found '$BASH_LIB'."
+	echo "Fix: Run the '$INSTALL' script."
 	exit 1
 fi
 
 # Import code from $BASH_LIB
 . $BASH_LIB
 
+# Programs required for the script
 PROGRAMS=(figlet lolcat)
 
-# Check if all programs from PROGRAMS array are installed
+# Check that every program in $PROGRAMS array is installed
 for program in ${PROGRAMS[@]}; do
-	
 	if [[ ! -x "$(command -v $program)" ]]; then
-		error "$(reversed $program) is not installed. Please run the '$INSTALL' script"
+		error "$(reversed $program) is not installed."
+		fix "Run the '$INSTALL' script"
+		exit 1
 	fi
-
 done
-
-# If any of the programs in PROGRAMS array is not installed
-if [[ $NUM_ERRORS -ne 0 ]]; then
-	exit 1
-fi
 
 # Parse Options
 for arg in $@; do
@@ -98,22 +100,26 @@ COMMAND=${ARGS[0]}
 # Check the <command> argument is valid
 case $COMMAND in
 	begin )
-		# Check the <num> argument is given
+		# Check the <lesson_num> argument is given
 		if [[ ${#ARGS[@]} -lt 2 ]]; then
 			usage
 			echo ""
-			fatal_error "Missing <num> argument"
+			fatal_error "begin - missing <lesson_num> argument"
 		fi
 		BEGIN_FLAG=1
 		;;
 	end )
-		# Check the <num> argument is given
+		# Check the <lesson_num> argument is given
 		if [[ ${#ARGS[@]} -lt 2 ]]; then
 			usage
 			echo ""
-			fatal_error "Missing <num> argument"
+			fatal_error "end - missing <lesson_num> argument"
 		fi
 		END_FLAG=1
+		;;
+	help )
+		usage
+		exit 0
 		;;
 	* )
 		usage
@@ -123,16 +129,18 @@ case $COMMAND in
 esac
 
 # Must be the second one in the ARGS array
-NUM=${ARGS[1]}
+LESSON_NUM=${ARGS[1]}
 
-# Check if <num> argument is an integer
-if [[ ! "$NUM" =~ ^[0-9]+$ ]]; then
-	fatal_error "<num> argument must be an integer"
+# Check if <lesson_num> argument is an integer
+if [[ ! "$LESSON_NUM" =~ ^[0-9]+$ ]]; then
+	error "<lesson_num> argument must be an integer"
+	fix "Try 1..$MAX_LESSON_NUM"
+	exit 1
 fi
 
-# Check if <num> argument is less than or equal MAX_LESSON_NUM
-if [[ ! "$NUM" -le $MAX_LESSON_NUM ]]; then
-	warning "$1 exceed the MAX_LESSON_NUM"
+# Check if <lesson_num> argument is less than or equal MAX_LESSON_NUM
+if [[ ! "$LESSON_NUM" -le $MAX_LESSON_NUM ]]; then
+	warning "$LESSON_NUM exceed the MAX_LESSON_NUM"
 	ask "Proceed"
 fi
 
@@ -146,35 +154,37 @@ DIRECTORIES=(Examples Exercises Theory Whiteboard Programs Homework)
 
 if [[ $BEGIN_FLAG -eq 1 ]]; then
 
-	# Check if there is a Lesson with number <num>
-	if [[ -d $NUM ]]; then
-		fatal_error "Lesson number $(reversed $NUM) already exists"
+	# Check if there is a Lesson with number <lesson_num>
+	if [[ -d $LESSON_NUM ]]; then
+		error "Lesson number $(reversed $LESSON_NUM) already exists"
+		fix "Try another number"
+		exit 1
 	fi
 
 	# Create the Lesson layout
 	for dir in ${DIRECTORIES[@]}; do
-		$MKDIR $NUM/$dir
+		$MKDIR $LESSON_NUM/$dir
 	done
 
 	# Begin screen
-	figlet -c "$(whoami) Lesson $NUM. Begin" | lolcat
+	figlet -c "$(whoami) Lesson $LESSON_NUM. Begin" | lolcat
 
 elif [[ $END_FLAG -eq 1 ]]; then
 
-	# Chech if there is no Lesson with number <num>
-	if [[ ! -d $NUM ]]; then
-		fatal_error "Lesson number $(reversed $NUM) doesn't exist"
+	# Chech if there is no Lesson with number <lesson_num>
+	if [[ ! -d $LESSON_NUM ]]; then
+		fatal_error "Lesson number $(reversed $LESSON_NUM) doesn't exist"
 	fi
 
 	for dir in ${DIRECTORIES[@]}; do
-		# if is empty
-		if [[ -d $NUM/$dir ]] && [[ -z $(ls -A $NUM/$dir) ]]; then
-			$RMDIR $NUM/$dir
+		# if $dir exists and $dir is empty
+		if [[ -d $LESSON_NUM/$dir ]] && [[ -z $(ls -A $LESSON_NUM/$dir) ]]; then
+			$RMDIR $LESSON_NUM/$dir
 		fi
 	done
 
 	# End screen
-	figlet -c "$(whoami) Lesson $NUM. End" | lolcat
+	figlet -c "$(whoami) Lesson $LESSON_NUM. End" | lolcat
 fi
 
 exit 0
