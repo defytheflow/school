@@ -3,17 +3,26 @@
 INSTALL="install"
 BASH_LIB=$HOME/.bash_lib
 
-VERBOSE_FLAG=0
+# Commands
+BEGIN_FLAG=0
+END_FLAG=0
 
 MAX_LESSON_NUM=100
 LESSONS_DIR="Lessons"
+
+MKDIR="mkdir -p"
+RMDIR="rmdir"
 
 # How to use this script
 usage() {
 	echo "Generates a default directory structure for a lesson."
 	echo ""
 	echo "Usage:"
-	echo "  lesson [options] <num>"
+	echo "  lesson [options] <command>"
+	echo ""
+	echo "Commands:"
+	echo "  begin  <num>     creates the directories for the lesson"
+	echo "  end    <num>     removes unused directories for the lesson"
 	echo ""
 	echo "Options:"
 	echo "  -h, --help       displays a help message" 
@@ -35,7 +44,23 @@ fi
 # Import code from $BASH_LIB
 . $BASH_LIB
 
-# Check if an option was provided
+PROGRAMS=(figlet lolcat)
+
+# Check if all programs from PROGRAMS array are installed
+for program in ${PROGRAMS[@]}; do
+	
+	if [[ ! -x "$(command -v $program)" ]]; then
+		error "$(reversed $program) is not installed. Please run the '$INSTALL' script"
+	fi
+
+done
+
+# If any of the programs in PROGRAMS array is not installed
+if [[ $NUM_ERRORS -ne 0 ]]; then
+	exit 1
+fi
+
+# Parse Options
 for arg in $@; do
 	if [[ "$arg" =~ ^-[-]?[a-zA-Z]+$ ]]; then
 		case $arg in 
@@ -44,9 +69,12 @@ for arg in $@; do
 				exit 0
 				;;
 			-v | --verbose )
-				VERBOSE_FLAG=1
+				MKDIR="mkdir -pv"
+				RMDIR="rmdir -v"
 				;;
 			* )
+				usage
+				echo ""
 				fatal_error "Unknown option $(reversed $arg)"
 				;;
 		esac
@@ -57,18 +85,45 @@ done
 ARGS=($@)
 ARGS=(${ARGS[@]/-*/})
 
-# Check the <num> argument
+# Check the <command> argument is given
 if [[ ${#ARGS[@]} -eq 0 ]]; then
 	usage
 	echo ""
-	fatal_error "Missing <num> argument"
-elif [[ ${#ARGS[@]} -gt 1 ]]; then
-	usage
-	echo ""
-	fatal_error "Expected one <num> argument"
+	fatal_error "Missing <command> argument"
 fi
 
-NUM=${ARGS[0]}
+# Must be the first one in the ARGS array
+COMMAND=${ARGS[0]}
+
+# Check the <command> argument is valid
+case $COMMAND in
+	begin )
+		# Check the <num> argument is given
+		if [[ ${#ARGS[@]} -lt 2 ]]; then
+			usage
+			echo ""
+			fatal_error "Missing <num> argument"
+		fi
+		BEGIN_FLAG=1
+		;;
+	end )
+		# Check the <num> argument is given
+		if [[ ${#ARGS[@]} -lt 2 ]]; then
+			usage
+			echo ""
+			fatal_error "Missing <num> argument"
+		fi
+		END_FLAG=1
+		;;
+	* )
+		usage
+		echo ""
+		fatal_error "Unknown command $(reversed $COMMAND)"
+		;;
+esac
+
+# Must be the second one in the ARGS array
+NUM=${ARGS[1]}
 
 # Check if <num> argument is an integer
 if [[ ! "$NUM" =~ ^[0-9]+$ ]]; then
@@ -81,48 +136,45 @@ if [[ ! "$NUM" -le $MAX_LESSON_NUM ]]; then
 	ask "Proceed"
 fi
 
-# Check if there is already a Lesson with number <num>
-if [[ -d $NUM ]]; then
-	fatal_error "Lesson number $(reversed $1) already exists"
-fi
-
 # Check if inside of LESSONS_DIR directory
 if [[ ! "$(pwd)" =~ .+/$LESSONS_DIR$ ]]; then
 	warning "Not inside $(reversed $LESSONS_DIR) directory"
 	ask "Proceed"
 fi
 
-# Check if figlet program is installed
-if [[ ! -x "$(command -v figlet)" ]]; then
-	error "$(reversed "figlet") is not installed. Please run the '$INSTALL' script"
+DIRECTORIES=(Examples Exercises Theory Whiteboard Programs Homework)
+
+if [[ $BEGIN_FLAG -eq 1 ]]; then
+
+	# Check if there is a Lesson with number <num>
+	if [[ -d $NUM ]]; then
+		fatal_error "Lesson number $(reversed $NUM) already exists"
+	fi
+
+	# Create the Lesson layout
+	for dir in ${DIRECTORIES[@]}; do
+		$MKDIR $NUM/$dir
+	done
+
+	# Begin screen
+	figlet -c "$(whoami) Lesson $NUM. Begin" | lolcat
+
+elif [[ $END_FLAG -eq 1 ]]; then
+
+	# Chech if there is no Lesson with number <num>
+	if [[ ! -d $NUM ]]; then
+		fatal_error "Lesson number $(reversed $NUM) doesn't exist"
+	fi
+
+	for dir in ${DIRECTORIES[@]}; do
+		# if is empty
+		if [[ -d $NUM/$dir ]] && [[ -z $(ls -A $NUM/$dir) ]]; then
+			$RMDIR $NUM/$dir
+		fi
+	done
+
+	# End screen
+	figlet -c "$(whoami) Lesson $NUM. End" | lolcat
 fi
-
-# Check if lolcat program is installed
-if [[ ! -x "$(command -v lolcat)" ]]; then
-	error "$(reversed "lolcat") is not installed. Please run the '$INSTALL' script"
-fi
-
-# If a non-fatal error occured to this moment - exit
-if [[ $NUM_ERRORS -ne 0 ]]; then
-	exit 1
-fi
-
-# Alter the behaviour of 'mkdir' command if '-v' flag was specified
-if [[ $VERBOSE_FLAG -eq 1 ]]; then
-	MKDIR="mkdir -v"
-else
-	MKDIR="mkdir"
-fi
-
-# Create the Lesson layout
-$MKDIR $NUM
-$MKDIR $NUM/Examples
-$MKDIR $NUM/Exercises
-$MKDIR $NUM/Theory
-$MKDIR $NUM/Whiteboard
-$MKDIR $NUM/Programs
-$MKDIR $NUM/Homework
-
-figlet -c "$(whoami) Lesson $NUM" | lolcat
 
 exit 0
