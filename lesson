@@ -1,9 +1,11 @@
 #!/bin/bash
 
+INSTALL="install"
 BASH_LIB=$HOME/.bash_lib
-BASH_LIB_REP="https://github.com/defytheflow/dotfiles.git"
 
-MAX_LESSON_NUM=100 
+VERBOSE_FLAG=0
+
+MAX_LESSON_NUM=100
 LESSONS_DIR="Lessons"
 
 # How to use this script
@@ -14,7 +16,8 @@ usage() {
 	echo "  lesson [options] <num>"
 	echo ""
 	echo "Options:"
-	echo "  -h, --help    shows a help message" 
+	echo "  -h, --help       displays a help message" 
+	echo "  -v, --verbose    displays what directories are being created"
 	echo ""
 	echo "Dependencies:"
 	echo "  bash_lib"
@@ -22,54 +25,15 @@ usage() {
 	echo "  lolcat"
 }
 
-# Download BASH_LIB and move to home directory
-download_bash_lib() {
-	git clone $BASH_LIB_REP > /dev/null 2>&1
-	mv dotfiles/.bash_lib $HOME/
-	rm -rf dotfiles
-}
-
-# Try to import code from ~/.bash_lib file
-if [[ -f $BASH_LIB ]]; then
-
-	# Check if $BASH_LIB is up-to-date
-	if [[ $0 -nt $BASH_LIB ]]; then
-		echo "You might need to update the $BASH_LIB file"
-		
-		echo -n "Update now? [y/n] "
-		read ANS
-		if [[ "$ANS" =~ ^[yY][eE]?[sS]? ]]; then
-			download_bash_lib
-			echo "Update complete. Please run again."
-			exit 0
-		else	
-			. $BASH_LIB
-		fi
-
-	else
-		. $BASH_LIB
-	fi 
-else
-	echo "Unable to find '$BASH_LIB' file."
-	
-	# Ask if user wants to download the .bash_lib file
-	echo -n "Download now? [y/n] "
-	read ANS
-	if [[ ! "$ANS" =~ ^[yY][eE]?[sS]? ]]; then
-		exit 0;
-	fi
-
-	# Check if git is installed
-	if [[ ! -x "$(command -v git)" ]]; then
-		error "$(reversed git) is not installed."
-		ask "Install now"
-		sudo apt-get install git > /dev/null 2>&1
-	fi
-
-	download_bash_lib
-	echo "Download complete. Please run again."
-	exit 0
+# Check if $BASH_LIB file is present
+if [[ ! -f $BASH_LIB ]]; then
+	echo  "Unable to find the '$BASH_LIB' file."
+	echo  "Please run the '$INSTALL' script."
+	exit 1
 fi
+
+# Import code from $BASH_LIB
+. $BASH_LIB
 
 # Check if an option was provided
 for arg in $@; do
@@ -79,6 +43,9 @@ for arg in $@; do
 				usage
 				exit 0
 				;;
+			-v | --verbose )
+				VERBOSE_FLAG=1
+				;;
 			* )
 				fatal_error "Unknown option $(reversed $arg)"
 				;;
@@ -86,26 +53,36 @@ for arg in $@; do
 	fi	   
 done
 
-# Check if <num> argument was given
-if [[ $# -lt 1 ]]; then
+# Remove all options to check the required argument
+ARGS=($@)
+ARGS=(${ARGS[@]/-*/})
+
+# Check the <num> argument
+if [[ ${#ARGS[@]} -eq 0 ]]; then
 	usage
 	echo ""
 	fatal_error "Missing <num> argument"
+elif [[ ${#ARGS[@]} -gt 1 ]]; then
+	usage
+	echo ""
+	fatal_error "Expected one <num> argument"
 fi
 
+NUM=${ARGS[0]}
+
 # Check if <num> argument is an integer
-if [[ ! "$1" =~ ^[0-9]+$ ]]; then
+if [[ ! "$NUM" =~ ^[0-9]+$ ]]; then
 	fatal_error "<num> argument must be an integer"
 fi
 
 # Check if <num> argument is less than or equal MAX_LESSON_NUM
-if [[ ! "$1" -le $MAX_LESSON_NUM ]]; then
+if [[ ! "$NUM" -le $MAX_LESSON_NUM ]]; then
 	warning "$1 exceed the MAX_LESSON_NUM"
 	ask "Proceed"
 fi
 
 # Check if there is already a Lesson with number <num>
-if [[ -d $1 ]]; then
+if [[ -d $NUM ]]; then
 	fatal_error "Lesson number $(reversed $1) already exists"
 fi
 
@@ -114,29 +91,38 @@ if [[ ! "$(pwd)" =~ .+/$LESSONS_DIR$ ]]; then
 	warning "Not inside $(reversed $LESSONS_DIR) directory"
 	ask "Proceed"
 fi
+
 # Check if figlet program is installed
 if [[ ! -x "$(command -v figlet)" ]]; then
-	error "$(reversed "figlet") is not installed."
-	ask "Install now"
-	sudo apt-get install figlet > /dev/null 2>&1
+	error "$(reversed "figlet") is not installed. Please run the '$INSTALL' script"
 fi
 
 # Check if lolcat program is installed
 if [[ ! -x "$(command -v lolcat)" ]]; then
-	error "$(reversed "lolcat") is not installed."
-	ask "Install now"
-	sudo apt-get install lolcat > /dev/null 2>&1
+	error "$(reversed "lolcat") is not installed. Please run the '$INSTALL' script"
+fi
+
+# If a non-fatal error occured to this moment - exit
+if [[ $NUM_ERRORS -ne 0 ]]; then
+	exit 1
+fi
+
+# Alter the behaviour of 'mkdir' command if '-v' flag was specified
+if [[ $VERBOSE_FLAG -eq 1 ]]; then
+	MKDIR="mkdir -v"
+else
+	MKDIR="mkdir"
 fi
 
 # Create the Lesson layout
-mkdir $1
-mkdir $1/Examples
-mkdir $1/Exercises
-mkdir $1/Theory
-mkdir $1/Whiteboard
-mkdir $1/Programs
-mkdir $1/Homework
+$MKDIR $NUM
+$MKDIR $NUM/Examples
+$MKDIR $NUM/Exercises
+$MKDIR $NUM/Theory
+$MKDIR $NUM/Whiteboard
+$MKDIR $NUM/Programs
+$MKDIR $NUM/Homework
 
-figlet -c "$(whoami) Lesson $1" | lolcat
+figlet -c "$(whoami) Lesson $NUM" | lolcat
 
 exit 0

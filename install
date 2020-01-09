@@ -1,0 +1,59 @@
+#!/bin/bash
+
+# Installs all the required files and programs for the 'school' scripts.
+#
+# Modified by Artyom Danilov on January 9, 2020.
+#
+# Installs:
+#     - bash_lib
+#     - figlet
+#     - lolcat
+
+# Expected location of BASH_LIB file
+BASH_LIB=$HOME/.bash_lib
+
+# Git repository of BASH_LIB file
+BASH_LIB_REP="https://github.com/defytheflow/dotfiles.git"
+
+download_bash_lib() {
+	echo "Downloading 'bash_lib'"
+	git clone $BASH_LIB_REP > /dev/null 2>&1
+	mv dotfiles/.bash_lib $HOME/
+	rm -rf dotfiles
+}
+
+# Check if git is installed (to download the BASH_LIB file)
+if [[ ! -x "$(command -v git)" ]]; then
+	echo -n "git is not installed. Installing..."
+	sudo apt-get install git > /dev/null 2>&1
+fi
+
+# Look for BASH_LIB file
+if [[ -f $BASH_LIB ]]; then
+
+	# Check if BASH_LIB is up-to-date
+	if [[ $0 -nt $BASH_LIB ]]; then
+		# Download BASH_LIB and move to home directory
+		download_bash_lib
+	fi
+
+else
+	download_bash_lib
+fi
+
+# Import the BASH_LIB file (It is installed by now)
+. $BASH_LIB
+
+# Download programs for 'lesson' script
+LESSON_PROGRAMS=(figlet lolcat)
+
+for program in "${LESSON_PROGRAMS[@]}"; do
+	if [[ ! -x "$(command -v $program)" ]]; then
+		echo "$(reversed $program) is not installed. Installing..."
+		sudo apt-get install $program > /dev/null 2>&1
+	fi
+done
+
+echo "$(green "You are good to go!")"
+
+exit 0
