@@ -5,7 +5,10 @@ INSTALL="install"
 BASH_LIB=$HOME/.bash_lib
 
 # Options
+
+# -m, --makefile
 MAKEFILE_FLAG=0
+MAKEFILE_NAME=Makefile
 
 # Commands
 BEGIN_FLAG=0
@@ -45,15 +48,14 @@ usage() {
 	echo "  lolcat"
 }
 
-# Creates a generic makefile for c programs in $1 directory
+# Creates a generic makefile for a C program in $1 directory
 generate_makefile() {
-	local MAKEFILE=$1/Makefile
-	echo "# Generic C Makefile" >> $MAKEFILE
-	echo "" >> $MAKEFILE 
-	echo "C_FLAGS=-g -O0 -Wall -Wextra -Werror -Wpedantic -std=c11" >> $MAKEFILE 
-	echo "" >> $MAKEFILE 
-	echo "%: %.c" >> $MAKEFILE 
-	echo -e '\tgcc $^ $(C_FLAGS) -o $@' >> $MAKEFILE
+	echo "# Generic C Makefile" >> $1/$MAKEFILE_NAME
+	echo "" >> $1/$MAKEFILE_NAME 
+	echo "C_FLAGS=-g -O0 -Wall -Wextra -Werror -Wpedantic -std=c11" >> $1/$MAKEFILE_NAME 
+	echo "" >> $1/$MAKEFILE_NAME 
+	echo "%: %.c" >> $1/$MAKEFILE_NAME 
+	echo -e '\tgcc $^ $(C_FLAGS) -o $@' >> $1/$MAKEFILE_NAME
 }
 
 # Check if $BASH_LIB file is present
@@ -187,6 +189,7 @@ if [[ $BEGIN_FLAG -eq 1 ]]; then
 
 	# Check if $MAKEFILE_FLAG is on
 	if [[ $MAKEFILE_FLAG -eq 1 ]]; then
+		# In each $dir create a Makefile
 		for dir in ${DIRECTORIES[@]}; do
 			generate_makefile $LESSON_NUM/$dir
 		done
@@ -203,9 +206,12 @@ elif [[ $END_FLAG -eq 1 ]]; then
 	fi
 
 	for dir in ${DIRECTORIES[@]}; do
-		# if $dir exists and $dir is empty
-		if [[ -d $LESSON_NUM/$dir ]] && [[ -z $(ls -A $LESSON_NUM/$dir) ]]; then
-			$RMDIR $LESSON_NUM/$dir
+		# if $dir exists and ($dir is empty or only has $MAKEFILE_NAME file in it)
+		if [[ ( -d $LESSON_NUM/$dir ) ]] && [[ -z $(ls -A $LESSON_NUM/$dir) ||
+		         -f $LESSON_NUM/$dir/$MAKEFILE_NAME  ]]; then
+			rm -r $LESSON_NUM/$dir
+		else
+				echo "no"
 		fi
 	done
 
