@@ -4,6 +4,9 @@
 INSTALL="install"
 BASH_LIB=$HOME/.bash_lib
 
+# Options
+MAKEFILE_FLAG=0
+
 # Commands
 BEGIN_FLAG=0
 END_FLAG=0
@@ -24,6 +27,8 @@ usage() {
 	echo "Options:"
 	echo "  -h, --help       displays a help message" 
 	echo "  -v, --verbose    displays what directories are being created"
+	echo "  -m, --makefile   generate a generic makefile for c programs inside"
+	echo "                   of each directory"
 	echo ""
 	echo "Commands:"
 	echo "  begin  <lesson_num>     creates the directories for the lesson"
@@ -38,6 +43,17 @@ usage() {
 	echo "  bash_lib"
 	echo "  figlet"
 	echo "  lolcat"
+}
+
+# Creates a generic makefile for c programs in $1 directory
+generate_makefile() {
+	local MAKEFILE=$1/Makefile
+	echo "# Generic C Makefile" >> $MAKEFILE
+	echo "" >> $MAKEFILE 
+	echo "C_FLAGS=-g -O0 -Wall -Wextra -Werror -Wpedantic -std=c11" >> $MAKEFILE 
+	echo "" >> $MAKEFILE 
+	echo "%: %.c" >> $MAKEFILE 
+	echo -e '\tgcc $^ $(C_FLAGS) -o $@' >> $MAKEFILE
 }
 
 # Check if $BASH_LIB file is present
@@ -73,6 +89,9 @@ for arg in $@; do
 			-v | --verbose )
 				MKDIR="mkdir -pv"
 				RMDIR="rmdir -v"
+				;;
+			-m | --makefile )
+				MAKEFILE_FLAG=1
 				;;
 			* )
 				usage
@@ -165,6 +184,13 @@ if [[ $BEGIN_FLAG -eq 1 ]]; then
 	for dir in ${DIRECTORIES[@]}; do
 		$MKDIR $LESSON_NUM/$dir
 	done
+
+	# Check if $MAKEFILE_FLAG is on
+	if [[ $MAKEFILE_FLAG -eq 1 ]]; then
+		for dir in ${DIRECTORIES[@]}; do
+			generate_makefile $LESSON_NUM/$dir
+		done
+	fi 
 
 	# Begin screen
 	figlet -c "$(whoami) Lesson $LESSON_NUM. Begin" | lolcat
