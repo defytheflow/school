@@ -48,6 +48,13 @@ usage() {
 	echo "  lolcat"
 }
 
+display_motto() {
+	echo "Express your ideas in code:"
+	echo " - Correctly"
+	echo " - Simply"
+	echo " - Efficiently"
+}
+
 # Creates a generic makefile for a C program in $1 directory
 generate_makefile() {
 	echo "# Generic C Makefile" >> $1/$MAKEFILE_NAME
@@ -197,6 +204,7 @@ if [[ $BEGIN_FLAG -eq 1 ]]; then
 
 	# Begin screen
 	figlet -c "$(whoami) Lesson $LESSON_NUM. Begin" | lolcat
+	display_motto | figlet | lolcat
 
 elif [[ $END_FLAG -eq 1 ]]; then
 
@@ -208,10 +216,10 @@ elif [[ $END_FLAG -eq 1 ]]; then
 	for dir in ${DIRECTORIES[@]}; do
 		# if $dir exists and ($dir is empty or only has $MAKEFILE_NAME file in it)
 		if [[ ( -d $LESSON_NUM/$dir ) ]] && [[ -z $(ls -A $LESSON_NUM/$dir) ||
-		         -f $LESSON_NUM/$dir/$MAKEFILE_NAME  ]]; then
-			rm -r $LESSON_NUM/$dir
-		else
-				echo "no"
+		 ( -f $LESSON_NUM/$dir/$MAKEFILE_NAME &&
+		 $(ls -1 $LESSON_NUM/$dir | wc -l) -eq 1 ) ]];
+		then
+			rm -vr $LESSON_NUM/$dir
 		fi
 	done
 
