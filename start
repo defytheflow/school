@@ -17,7 +17,7 @@
 
 # - 0. If not installed, installs python3 program.
 # - 1. If not installed, install pip3 program.
-# - 2. Installs ipython package.
+# - 2. If not installed, installs ipython package.
 
 # -c
 
