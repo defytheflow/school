@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Dependencies
-INSTALL="install"
+INSTALL="start"
 BASH_LIB=$HOME/.bash_lib
 
 # Options
