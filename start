@@ -1,25 +1,27 @@
 #!/bin/bash
 
-# Installs all the required files, packages and programs for the lessons.
+# Installs all the required files, packages and programs for the coding lessons.
 
 # Usage: start [--python|--py|-p] [-c] [--nolang]
 
-# - 0. Updates the system.
-# - 1. Installs git.
-# - 2. Downloads the dotfiles.
-# - 3. Setups backup directories for vim and emacs.
-# - 4. Installs fun programs (figlet, lolcat, etc).
-# - 5. Depending on the first argument installs specific programs.
+# - 0. Updates packages list
+#      Upgrades upgradable packages
+#      Removes no longer needed packages
+# - 1. If not installed, installs git.
+# - 2. Downloads the dotfiles repository.
+# - 3. If not set up, sets up backup directories for vim and emacs,
+# - 4. If not installed, installs fun programs (figlet, lolcat, etc).
+# - 5. Depending on the first argument installs specific packages, programs.
 
 # --python|--py|-p
 
-# - 0. Install python3
-# - 1. Install pip3
-# - 2. Install ipython
+# - 0. If not installed, installs python3 program.
+# - 1. If not installed, install pip3 program.
+# - 2. Installs ipython package.
 
 # -c
 
-# - 0. install build-essential package
+# - 0. If not installed, installs the build-essential package.
 
 NOLANG_FLAG=0
 PYTHON_FLAG=0
@@ -47,14 +49,17 @@ else
 fi
 
 # Update the system
-echo "Updating the system..."
-yes | sudo apt update
-yes | sudo apt upgrade
+echo "Updating packages list..."
+yes | sudo apt-get update > /dev/null 2>&1
+echo "Upgrading upgradable packages..."
+yes | sudo apt-get upgrade > /dev/null 2>&1
+echo "Removing no longer needed packages..."
+yes | sudo apt-get autoremove > /dev/null 2>&1
 
 # Check if git is installed
 if [[ ! -x "$(command -v git)" ]]; then
     echo -n "git is not installed. Installing..."
-    sudo apt-get install git > /dev/null 2>&1
+    sudo apt-get install git > /dev/null
 fi
 
 # Download the dotfiles repository
@@ -72,51 +77,56 @@ for file in ${DOTFILES[@]}; do
 done
 rm -rf dotfiles
 
-# Create directories for backup files
+# If backup directories for vim and emacs are not set up, set them up.
 echo "Making sure that backup directories exist..."
 BACKUP_DIRECTORIES=($HOME/.backup $HOME/.backup/vim $HOME/.backup/emacs)
-
 for dir in ${BACKUP_DIRECTORIES[@]}; do
     if [[ ! -d $dir ]]; then
-	mkdir $dir
+		mkdir $dir
     fi
 done
 
-# Install fun programs
+# If some of the fun programs are not installed, install them.
 FUN_PROGRAMS=(figlet lolcat cowsay cmatrix fortune rig)
-
 for program in "${FUN_PROGRAMS[@]}"; do
 	if [[ ! -x "$(command -v $program)" ]]; then
 		echo "Installing '$program'..."
-		sudo apt-get install $program > /dev/null 2>&1
+		sudo apt-get install $program > /dev/null
 	fi
 done
 
-# Based on the flag install programs
+# Based on the flag install specific packages, programs.
 if [[ $PYTHON_FLAG -eq 1 ]]; then
 	
+	echo "Making sure that required Python programs are installed..."
+	# If some of python related programs are not installed, install them.
 	PYTHON_PROGRAMS=("python3" "pip3")
 	for program in ${PYTHON_PROGRAMS[@]}; do
 		if [[ ! -x "$(command -v $program)" ]]; then
 			echo "Installing '$program'..."
-			sudo apt-get install $program > /dev/null 2>&1
+			sudo apt-get install $program > /dev/null
 		fi
 	done
-
-	PIP_PACKAGES=("ipython")
-	for package in ${PIP_PACKAGES[@]}; do
-		echo "Installing '$package'..."
-		pip3 install $package > /dev/null 2>&1
+	
+	echo "Making sure that required Python Packages are installed..."
+	# If a package from PYTHON_PACKAGES is not installed, install it.
+	PYTHON_PACKAGES=("ipython")
+	for package in ${PYTHON_PACKAGES[@]}; do
+		if ! pip3 show $package > /dev/null; then
+			echo "Installing '$package'..."
+			pip3 install $package > /dev/null
+		fi
 	done
 
 elif [[ $C_FLAG -eq 1 ]]; then
 	
-	C_PACKAGES=("build-essential")
-	for package in ${C_PACKAGES[@]}; do
-		echo "Installing '$package'..."
-		sudo apt-get install build-essential
-	done
-
+	echo "Making sure that required C packages are installed..."
+	# If not installed, install the build-essential package
+	if ! dpkg -s build-essential > /dev/null; then
+		echo "Installing the 'build-essential package'"
+		sudo apt-get install build-essential > /dev/null
+	fi
+	
 fi
 
 echo "You are good to go!"
