@@ -73,7 +73,7 @@ done
 rm -rf dotfiles
 
 # Create directories for backup files
-echo "Creating the backup directories..."
+echo "Making sure that backup directories exist..."
 BACKUP_DIRECTORIES=($HOME/.backup $HOME/.backup/vim $HOME/.backup/emacs)
 
 for dir in ${BACKUP_DIRECTORIES[@]}; do
