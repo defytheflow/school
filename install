@@ -1,0 +1,171 @@
+#!/bin/bash
+
+usage() {
+    echo -e "Installs files, packages and programs for coding lessons.\n"
+    echo "Usage:"
+    echo -e "  install [-a] [-c] [-d] [-f] [-h] [-p]\n"
+    echo "Options:"
+    echo "  -a  install all"
+    echo "  -c  install C programs and packages"
+    echo "  -d  install dotfiles"
+    echo "  -f  install fun programs"
+    echo "  -h  help message"
+    echo "  -p  install python programs and packages"
+}
+
+# -c
+C_FLAG=0
+# -d
+DOT_FLAG=0
+DOTFILES_GIT_REPO="https://github.com/defytheflow/dotfiles.git"
+# -f
+FUN_FLAG=0
+FUN_PROGRAMS=(figlet lolcat cowsay cmatrix fortune rig)
+# -p
+PY_FLAG=0
+PIP_PACKAGES=()
+
+# Display a usage message if no options given
+if [[ $# -eq 0 ]]; then
+    usage
+    exit 0
+fi
+
+# Parse options
+while getopts ":acdfhp" opt; do
+    case $opt in
+        a)
+            C_FLAG=1
+            DOT_FLAG=1
+            FUN_FLAG=1
+            PY_FLAG=1 ;;
+        c)
+            C_FLAG=1   ;;
+        d)
+            DOT_FLAG=1 ;;
+        f)
+            FUN_FLAG=1 ;;
+        h)
+            usage
+            exit 0     ;;
+        p)
+            PY_FLAG=1  ;;
+        *)
+            usage
+            exit 1     ;;
+    esac
+done
+
+# Check internet connection
+echo "Checking your internet connection."
+wget -q --spider https://google.com
+if [[ $? -ne 0 ]]; then
+    echo "Error: internet connection is required."
+    exit 1
+fi
+
+# Ask to update the system
+echo -n "Update packages? [y/n]: "
+read answer
+if [[ "$answer" =~ ^[yY][eE]?[sS]?$ ]]; then # - TESTED on wsl
+
+    echo "Updating packages list..."
+    yes | sudo apt-get update > /dev/null 2>&1
+    echo "Upgrading packages..."
+    yes | sudo apt-get upgrade > /dev/null 2>&1
+    echo "Removing no longer needed packages..."
+    yes | sudo apt-get autoremove > /dev/null 2>&1
+
+fi
+
+echo "Checking that 'git' is installed." # - TESTED on wsl
+if [[ ! -x "$(command -v git)" ]]; then
+    echo "Installing 'git'..."
+    yes | sudo apt-get install git > /dev/null 2>&1
+fi
+
+echo "Checking that 'vim' is installed."
+if [[ ! -x $(command -v vim) ]]; then
+    echo "Installing 'vim'..."
+    yes | sudo apt-get install vim > /dev/null 2>&1
+fi
+
+echo "Checking that 'tmux' is installed." # - TESTED on wsl
+if [[ ! -x $(command -v tmux) ]]; then
+    echo "Installing 'tmux'..."
+    yes | sudo apt-get install tmux > /dev/null 2>&1
+fi
+
+# '-d' - Download the dot files - TESTED on wsl
+if [[ $DOT_FLAG -eq 1 ]]; then
+    echo "Downloading the 'dotfiles' repository from git..."
+    git clone $DOTFILES_GIT_REPO > /dev/null 2>&1
+
+    echo "Setting up the dotfiles..."
+    shopt -s dotglob
+    mv dotfiles/* $HOME/ 2> /dev/null
+    rm -rf dotfiles
+fi
+
+# '-f' - Download the fun programs - TESTED on wsl
+if [[ $FUN_FLAG -eq 1 ]]; then
+
+    echo "Checking that all fun programs are installed."
+    for program in "${FUN_PROGRAMS[@]}"; do
+        if [[ ! -x "$(command -v $program)" ]]; then
+            echo "Installing '$program'..."
+            yes | sudo apt-get install $program > /dev/null 2>&1
+        fi
+    done
+
+fi
+
+# '-p' - Download Python programs and packages - TESTED on wsl
+if [[ $PY_FLAG -eq 1 ]]; then
+
+    echo "Checking that 'python3' is installed."
+    if [[ ! -x $(command -v python3) ]]; then
+        echo "Installing 'python3'..."
+        yes | sudo apt-get install python3 > /dev/null 2>&1
+    fi
+
+    echo "Checking that 'pip3' is installed."
+    if [[ ! -x $(command -v pip3) ]]; then
+        echo "Installing 'pip3'..."
+        yes | sudo apt-get install python3-pip > /dev/null 2>&1
+    fi
+
+    echo "Checking that 'pylint' is installed."
+    if [[ ! -x $(command -v pylint) ]]; then
+        echo "Installing 'pylint'..."
+        yes | sudo apt-get install pylint > /dev/null 2>&1
+    fi
+
+    echo "Checking that 'ipython' is installed."
+    if [[ ! -x $(command -v ipython) ]]; then
+        echo "Installing 'ipython'..."
+        yes | sudo apt-get install ipython > /dev/null 2>&1
+    fi
+
+    echo "Checking that all required pip-packages are installed."
+    for package in ${PIP_PACKAGES[@]}; do
+        if ! pip3 show $package > /dev/null; then
+            echo "Installing '$package'..."
+            pip3 install $package > /dev/null
+        fi
+    done
+
+fi
+
+# '-c' Download C programs and packages
+if [[ $C_FLAG -eq 1 ]]; then
+    echo "Checking that 'build-essential' package is insalled."
+    if ! dpkg -s build-essential > /dev/null 2>&1; then
+        echo "Installing the 'build-essential package'"
+        yes | sudo apt-get install build-essential > /dev/null 2>&1
+    fi
+fi
+
+echo "You are good to go!"
+
+exit 0
