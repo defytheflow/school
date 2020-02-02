@@ -142,6 +142,9 @@ if [[ $BEGIN_FLAG -eq 1 ]]; then
         done
     fi
 
+    # Create a time-stamp file
+    touch $1/.lesson_start
+
     # Begin screen
     echo -e "Welcome to Lesson #$1, $USERNAME!\n"
     echo -e "Remember to express your ideas:\n"
@@ -167,13 +170,24 @@ elif [[ $END_FLAG -eq 1 ]]; then
         fi
     done
 
+    # Collect time-stats
+    lesson_duration=$(( $(date +%s) - $(stat -c "%Y" $1/.lesson_start) ))
+    seconds=$(( lesson_duration % 60 ))
+    minutes=$(( lesson_duration / 60 ))
+    hours=$(( lesson_duration / 3600 ))
+
+    # Delete a time-stamp file
+    rm $1/.lesson_start
+
+    # End screen
+    echo -e "End of lesson #$1. Goodbye, $USERNAME!\n"
+    echo -e "Stats:\n"
+    echo -e " 1. Lesson took $hours:$minutes:$seconds\n"
+
     # If no files were created, remove the lesson dir as well
     if isempty $1; then
         rmdir $1
     fi
-
-    # End screen
-    echo "End of lesson #$1. Goodbye, $USERNAME!"
 fi
 
 exit 0
