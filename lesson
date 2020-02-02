@@ -22,54 +22,54 @@ RMDIR="rmdir"
 
 # How to use this script
 usage() {
-	echo "Generates a default directory structure for a lesson."
-	echo ""
-	echo "Usage:"
-	echo "  lesson [options] <command>"
-	echo ""
-	echo "Options:"
-	echo "  -h, --help       displays a help message" 
-	echo "  -v, --verbose    displays what directories are being created"
-	echo "  -m, --makefile   generate a generic makefile for c programs inside"
-	echo "                   of each directory"
-	echo ""
-	echo "Commands:"
-	echo "  begin  <lesson_num>     creates the directories for the lesson"
-	echo "  end    <lesson_num>     removes unused directories for the lesson"
-	echo "  help                    displays a help message"
-	echo ""
-	echo "Examples:"
-	echo "  lesson begin 1"
-	echo "  lesson end 1"
-	echo ""
-	echo "Dependencies:"
-	echo "  bash_lib"
-	echo "  figlet"
-	echo "  lolcat"
+    echo "Generates a default directory structure for a lesson."
+    echo ""
+    echo "Usage:"
+    echo "  lesson [options] <command>"
+    echo ""
+    echo "Options:"
+    echo "  -h, --help       displays a help message" 
+    echo "  -v, --verbose    displays what directories are being created"
+    echo "  -m, --makefile   generate a generic makefile for c programs inside"
+    echo "                   of each directory"
+    echo ""
+    echo "Commands:"
+    echo "  begin  <lesson_num>     creates the directories for the lesson"
+    echo "  end    <lesson_num>     removes unused directories for the lesson"
+    echo "  help                    displays a help message"
+    echo ""
+    echo "Examples:"
+    echo "  lesson begin 1"
+    echo "  lesson end 1"
+    echo ""
+    echo "Dependencies:"
+    echo "  bash_lib"
+    echo "  figlet"
+    echo "  lolcat"
 }
 
 display_motto() {
-	echo "Express your ideas in code:"
-	echo " - Correctly"
-	echo " - Simply"
-	echo " - Efficiently"
+    echo "Express your ideas in code:"
+    echo " - Correctly"
+    echo " - Simply"
+    echo " - Efficiently"
 }
 
 # Creates a generic makefile for a C program in $1 directory
 generate_makefile() {
-	echo "# Generic C Makefile" >> $1/$MAKEFILE_NAME
-	echo "" >> $1/$MAKEFILE_NAME 
-	echo "C_FLAGS=-g -O0 -Wall -Wextra -Werror -Wpedantic -std=c11" >> $1/$MAKEFILE_NAME 
-	echo "" >> $1/$MAKEFILE_NAME 
-	echo "%: %.c" >> $1/$MAKEFILE_NAME 
-	echo -e '\tgcc $^ $(C_FLAGS) -o $@' >> $1/$MAKEFILE_NAME
+    echo "# Generic C Makefile" >> $1/$MAKEFILE_NAME
+    echo "" >> $1/$MAKEFILE_NAME
+    echo "C_FLAGS=-g -O0 -Wall -Wextra -Werror -Wpedantic -std=c11" >> $1/$MAKEFILE_NAME
+    echo "" >> $1/$MAKEFILE_NAME
+    echo "%: %.c" >> $1/$MAKEFILE_NAME
+    echo -e '\tgcc $^ $(C_FLAGS) -o $@' >> $1/$MAKEFILE_NAME
 }
 
 # Check if $BASH_LIB file is present
 if [[ ! -f $BASH_LIB ]]; then
-	echo "Error: File not found '$BASH_LIB'."
-	echo "Fix: Run the '$INSTALL' script."
-	exit 1
+    echo "Error: File not found '$BASH_LIB'."
+    echo "Fix: Run the '$INSTALL' script."
+    exit 1
 fi
 
 # Import code from $BASH_LIB
@@ -80,35 +80,35 @@ PROGRAMS=(figlet lolcat)
 
 # Check that every program in $PROGRAMS array is installed
 for program in ${PROGRAMS[@]}; do
-	if [[ ! -x "$(command -v $program)" ]]; then
-		error "$(reversed $program) is not installed."
-		fix "Run the '$INSTALL' script"
-		exit 1
-	fi
+    if [[ ! -x "$(command -v $program)" ]]; then
+        error "$(reversed $program) is not installed."
+        fix "Run the '$INSTALL' script"
+        exit 1
+    fi
 done
 
 # Parse Options
 for arg in $@; do
-	if [[ "$arg" =~ ^-[-]?[a-zA-Z]+$ ]]; then
-		case $arg in 
-			-h | --help )
-				usage
-				exit 0
-				;;
-			-v | --verbose )
-				MKDIR="mkdir -pv"
-				RMDIR="rmdir -v"
-				;;
-			-m | --makefile )
-				MAKEFILE_FLAG=1
-				;;
-			* )
-				usage
-				echo ""
-				fatal_error "Unknown option $(reversed $arg)"
-				;;
-		esac
-	fi	   
+    if [[ "$arg" =~ ^-[-]?[a-zA-Z]+$ ]]; then
+        case $arg in
+            -h | --help )
+                usage
+                exit 0
+                ;;
+            -v | --verbose )
+                MKDIR="mkdir -pv"
+                RMDIR="rmdir -v"
+                ;;
+            -m | --makefile )
+                MAKEFILE_FLAG=1
+                ;;
+            * )
+                usage
+                echo ""
+                fatal_error "Unknown option $(reversed $arg)"
+                ;;
+        esac
+    fi
 done
 
 # Remove all options to check the required argument
@@ -117,9 +117,9 @@ ARGS=(${ARGS[@]/-*/})
 
 # Check the <command> argument is given
 if [[ ${#ARGS[@]} -eq 0 ]]; then
-	usage
-	echo ""
-	fatal_error "Missing <command> argument"
+    usage
+    echo ""
+    fatal_error "Missing <command> argument"
 fi
 
 # Must be the first one in the ARGS array
@@ -127,33 +127,33 @@ COMMAND=${ARGS[0]}
 
 # Check the <command> argument is valid
 case $COMMAND in
-	begin )
-		# Check the <lesson_num> argument is given
-		if [[ ${#ARGS[@]} -lt 2 ]]; then
-			usage
-			echo ""
-			fatal_error "begin - missing <lesson_num> argument"
-		fi
-		BEGIN_FLAG=1
-		;;
-	end )
-		# Check the <lesson_num> argument is given
-		if [[ ${#ARGS[@]} -lt 2 ]]; then
-			usage
-			echo ""
-			fatal_error "end - missing <lesson_num> argument"
-		fi
-		END_FLAG=1
-		;;
-	help )
-		usage
-		exit 0
-		;;
-	* )
-		usage
-		echo ""
-		fatal_error "Unknown command $(reversed $COMMAND)"
-		;;
+    begin )
+        # Check the <lesson_num> argument is given
+        if [[ ${#ARGS[@]} -lt 2 ]]; then
+            usage
+            echo ""
+            fatal_error "begin - missing <lesson_num> argument"
+        fi
+        BEGIN_FLAG=1
+        ;;
+    end )
+        # Check the <lesson_num> argument is given
+        if [[ ${#ARGS[@]} -lt 2 ]]; then
+            usage
+            echo ""
+            fatal_error "end - missing <lesson_num> argument"
+        fi
+        END_FLAG=1
+        ;;
+    help )
+        usage
+        exit 0
+        ;;
+    * )
+        usage
+        echo ""
+        fatal_error "Unknown command $(reversed $COMMAND)"
+        ;;
 esac
 
 # Must be the second one in the ARGS array
@@ -161,70 +161,69 @@ LESSON_NUM=${ARGS[1]}
 
 # Check if <lesson_num> argument is an integer
 if [[ ! "$LESSON_NUM" =~ ^[0-9]+$ ]]; then
-	error "<lesson_num> argument must be an integer"
-	fix "Try 1..$MAX_LESSON_NUM"
-	exit 1
+    error "<lesson_num> argument must be an integer"
+    fix "Try 1..$MAX_LESSON_NUM"
+    exit 1
 fi
 
 # Check if <lesson_num> argument is less than or equal MAX_LESSON_NUM
 if [[ ! "$LESSON_NUM" -le $MAX_LESSON_NUM ]]; then
-	warning "$LESSON_NUM exceed the MAX_LESSON_NUM"
-	ask "Proceed"
+    warning "$LESSON_NUM exceed the MAX_LESSON_NUM"
+    ask "Proceed"
 fi
 
 # Check if inside of LESSONS_DIR directory
 if [[ ! "$(pwd)" =~ .+/$LESSONS_DIR$ ]]; then
-	warning "Not inside $(reversed $LESSONS_DIR) directory"
-	ask "Proceed"
+    warning "Not inside $(reversed $LESSONS_DIR) directory"
+    ask "Proceed"
 fi
 
 DIRECTORIES=(Examples Exercises Theory Whiteboard Programs Homework)
 
 if [[ $BEGIN_FLAG -eq 1 ]]; then
 
-	# Check if there is a Lesson with number <lesson_num>
-	if [[ -d $LESSON_NUM ]]; then
-		error "Lesson number $(reversed $LESSON_NUM) already exists"
-		fix "Try another number"
-		exit 1
-	fi
+    # Check if there is a Lesson with number <lesson_num>
+    if [[ -d $LESSON_NUM ]]; then
+        error "Lesson number $(reversed $LESSON_NUM) already exists"
+        fix "Try another number"
+        exit 1
+    fi
 
-	# Create the Lesson layout
-	for dir in ${DIRECTORIES[@]}; do
-		$MKDIR $LESSON_NUM/$dir
-	done
+    # Create the Lesson layout
+    for dir in ${DIRECTORIES[@]}; do
+        $MKDIR $LESSON_NUM/$dir
+    done
 
-	# Check if $MAKEFILE_FLAG is on
-	if [[ $MAKEFILE_FLAG -eq 1 ]]; then
-		# In each $dir create a Makefile
-		for dir in ${DIRECTORIES[@]}; do
-			generate_makefile $LESSON_NUM/$dir
-		done
-	fi 
+    # Check if $MAKEFILE_FLAG is on
+    if [[ $MAKEFILE_FLAG -eq 1 ]]; then
+        # In each $dir create a Makefile
+        for dir in ${DIRECTORIES[@]}; do
+            generate_makefile $LESSON_NUM/$dir
+        done
+    fi
 
-	# Begin screen
-	figlet -c "$(whoami) Lesson $LESSON_NUM. Begin" | lolcat
-	display_motto | figlet | lolcat
+    # Begin screen
+    figlet -c "$(whoami) Lesson $LESSON_NUM. Begin" | lolcat
+    display_motto | figlet | lolcat
 
 elif [[ $END_FLAG -eq 1 ]]; then
 
-	# Chech if there is no Lesson with number <lesson_num>
-	if [[ ! -d $LESSON_NUM ]]; then
-		fatal_error "Lesson number $(reversed $LESSON_NUM) doesn't exist"
-	fi
+    # Chech if there is no Lesson with number <lesson_num>
+    if [[ ! -d $LESSON_NUM ]]; then
+        fatal_error "Lesson number $(reversed $LESSON_NUM) doesn't exist"
+    fi
 
-	for dir in ${DIRECTORIES[@]}; do
-		# if $dir exists and ($dir is empty or only has $MAKEFILE_NAME file in it)
-		if [[ ( -d $LESSON_NUM/$dir ) ]] && [[ -z $(ls -A $LESSON_NUM/$dir) ||
-		 ( -f $LESSON_NUM/$dir/$MAKEFILE_NAME &&
-		 $(ls -1 $LESSON_NUM/$dir | wc -l) -eq 1 ) ]];
-		then
-			rm -vr $LESSON_NUM/$dir
-		fi
-	done
+    for dir in ${DIRECTORIES[@]}; do
+    # if $dir exists and ($dir is empty or only has $MAKEFILE_NAME file in it)
+        if [[ ( -d $LESSON_NUM/$dir ) ]] && [[ -z $(ls -A $LESSON_NUM/$dir) ||
+              ( -f $LESSON_NUM/$dir/$MAKEFILE_NAME &&
+                 $(ls -1 $LESSON_NUM/$dir | wc -l) -eq 1 ) ]]; then
+            rm -vr $LESSON_NUM/$dir
+        fi
+    done
 
-	# End screen
-	figlet -c "$(whoami) Lesson $LESSON_NUM. End" | lolcat
+    # End screen
+    figlet -c "$(whoami) Lesson $LESSON_NUM. End" | lolcat
 fi
 
 exit 0
