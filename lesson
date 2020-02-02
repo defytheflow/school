@@ -5,8 +5,6 @@
 # -m
 MAKEFILE_FLAG=0
 MAKEFILE="Makefile"
-# -v
-VERBOSE_FLAG=0
 
 # Commands:
 
@@ -24,13 +22,11 @@ usage() {
     echo "Generates a default directory structure for a lesson."
     echo ""
     echo "Usage:"
-    echo "  lesson [-h] [-m] [-v] <command> <lesson_num>"
+    echo "  lesson [-h] [-m] <command> <lesson_num>"
     echo ""
     echo "Options:"
     echo "  -h       displays a help message"
-    echo "  -m       generate a generic makefile for c programs inside of"
-    echo "           each directory"
-    echo "  -v       displays what directories are being created"
+    echo "  -m       creates a makefile for c programs inside of each directory"
     echo ""
     echo "Commands:"
     echo "  begin    creates the directories for the lesson"
@@ -43,18 +39,8 @@ usage() {
     echo ""
 }
 
-# Creates a generic makefile for a C program in $1 directory
-generate_makefile() {
-    echo "# Generic C Makefile" >> $1/$MAKEFILE
-    echo "" >> $1/$MAKEFILE
-    echo "C_FLAGS=-g -O0 -Wall -Wextra -Werror -Wpedantic -std=c11" >> $1/$MAKEFILE
-    echo "" >> $1/$MAKEFILE
-    echo "%: %.c" >> $1/$MAKEFILE
-    echo -e '\tgcc $^ $(C_FLAGS) -o $@' >> $1/$MAKEFILE
-}
-
 # Parse Options
-while getopts ":hmv" opt; do
+while getopts ":hm" opt; do
     case $opt in
         h)
             usage
@@ -62,9 +48,6 @@ while getopts ":hmv" opt; do
             ;;
         m)
             MAKEFILE_FLAG=1
-            ;;
-        v)
-            VERBOSE_FLAG=1
             ;;
         *)
             usage
@@ -150,7 +133,12 @@ if [[ $BEGIN_FLAG -eq 1 ]]; then
     if [[ $MAKEFILE_FLAG -eq 1 ]]; then
         # In each $dir create a Makefile
         for dir in ${LESSON_DIRECTORIES[@]}; do
-            generate_makefile $1/$dir
+            echo "# Generic C Makefile" >> $1/$dir/$MAKEFILE
+            echo "" >> $1/$dir/$MAKEFILE
+            echo "C_FLAGS=-g -O0 -Wall -Wextra -Werror -Wpedantic -std=c11" >> $1/$dir/$MAKEFILE
+            echo "" >> $1/$dir/$MAKEFILE
+            echo "%: %.c" >> $1/$dir/$MAKEFILE
+            echo -e '\tgcc $^ $(C_FLAGS) -o $@' >> $1/$dir/$MAKEFILE
         done
     fi
 
@@ -178,6 +166,11 @@ elif [[ $END_FLAG -eq 1 ]]; then
             rm -r $1/$dir
         fi
     done
+
+    # If no files were created, remove the lesson dir as well
+    if isempty $1; then
+        rmdir $1
+    fi
 
     # End screen
     echo "End of lesson #$1. Goodbye, $USERNAME!"
