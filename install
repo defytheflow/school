@@ -32,9 +32,9 @@ COMPLEMENTS=(howdoi)
 install_from_array() {
     local progs=($@)
     for prog in ${progs[@]}; do
-        echo "Checking that '$prog' is installed."
+        echo "  Checking that '$prog' is installed."
         if [[ ! -x $(command -v $prog) ]]; then
-            echo "Installing '$prog'..."
+            echo "  Installing '$prog'..."
             yes | sudo apt-get install $prog > /dev/null 2>&1
         fi
     done
@@ -78,22 +78,12 @@ if [[ $? -ne 0 ]]; then
     echo "Error: internet connection is required."
     exit 1
 fi
-
-# '-d' - Download the dot files - TESTED on wsl
-if [[ $DOT_FLAG -eq 1 ]]; then
-    echo "Downloading the 'dotfiles' repository from git..."
-    git clone $DOTFILES_GIT_REPO > /dev/null 2>&1
-
-    echo "Setting up the dotfiles..."
-    shopt -s dotglob
-    mv dotfiles/* $HOME/ 2> /dev/null
-    rm -rf dotfiles
-fi
+echo ""
 
 # Ask to update the system
 echo -n "Update packages? [y/n]: "
 read ans
-if isyes $ans; then # - TESTED on wsl
+if [[ "$ans" =~ ^[yY][eE]?[sS]?$ ]]; then # - TESTED on wsl
 
     echo "Updating packages list..."
     yes | sudo apt-get update > /dev/null 2>&1
@@ -103,53 +93,78 @@ if isyes $ans; then # - TESTED on wsl
     yes | sudo apt-get autoremove > /dev/null 2>&1
 
 fi
+echo ""
 
 # Checking and installing programs from $ESSENTIALS array
+echo "ESSENTIALS"
 install_from_array ${ESSENTIALS[@]}
+echo ""
 
 # Checking and installing programs from $COMPLEMENTS array
+echo "COMPLEMENTS"
 install_from_array ${COMPLEMENTS[@]}
+echo ""
+
+# '-d' - Download the dot files - TESTED on wsl
+if [[ $DOT_FLAG -eq 1 ]]; then
+    echo "DOTFILES"
+    echo "  Downloading the 'dotfiles' repository from git..."
+    git clone $DOTFILES_GIT_REPO > /dev/null 2>&1
+
+    echo "  Setting up the dotfiles..."
+    shopt -s dotglob
+    mv dotfiles/* $HOME/ 2> /dev/null
+    rm -rf dotfiles
+    echo ""
+fi
 
 # '-f' - Download the fun programs - TESTED on wsl
 if [[ $FUN_FLAG -eq 1 ]]; then
 
     # Check and install programs from $FUN_PROGS array
-    echo "Checking that all fun programs are installed."
+    echo "FUN PROGRAMS"
     install_from_array ${FUN_PROGS[@]}
-
+    echo ""
 fi
 
 # '-p' - Download Python programs and packages - TESTED on wsl
 if [[ $PY_FLAG -eq 1 ]]; then
 
     # Check and install programs from $PY_PROGS array
+    echo "PYTHON PROGRAMS"
     install_from_array ${PY_PROGS[@]}
 
     # Install pip3
-    echo "Checking that 'pip3' is installed."
+    echo "  Checking that 'pip3' is installed."
     if [[ ! -x $(command -v pip3) ]]; then
-        echo "Installing 'pip3'..."
+        echo "  Installing 'pip3'..."
         yes | sudo apt-get install python3-pip > /dev/null 2>&1
     fi
+    echo ""
 
+    echo "PIP PACKAGES"
     # Install pip packages
-    echo "Checking that all required pip-packages are installed."
+    #echo "Checking that all required pip-packages are installed."
     for package in ${PIP_PACKAGES[@]}; do
+        echo "Checking that '$package' is installed."
         if ! pip3 show $package > /dev/null; then
             echo "Installing '$package'..."
             pip3 install $package > /dev/null
         fi
     done
+    echo ""
 
 fi
 
 # '-c' Download C programs and packages
 if [[ $C_FLAG -eq 1 ]]; then
-    echo "Checking that 'build-essential' package is insalled."
+    echo "C PACKAGES"
+    echo "  Checking that 'build-essential' package is insalled."
     if ! dpkg -s build-essential > /dev/null 2>&1; then
         echo "Installing the 'build-essential package'"
         yes | sudo apt-get install build-essential > /dev/null 2>&1
     fi
+    echo ""
 fi
 
 echo "You are good to go!"
