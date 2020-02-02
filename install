@@ -20,10 +20,25 @@ DOT_FLAG=0
 DOTFILES_GIT_REPO="https://github.com/defytheflow/dotfiles.git"
 # -f
 FUN_FLAG=0
-FUN_PROGRAMS=(figlet lolcat cowsay cmatrix fortune rig)
+FUN_PROGS=(figlet lolcat cowsay cmatrix fortune rig)
 # -p
 PY_FLAG=0
+PY_PROGS=(python3 ipython pylint)
 PIP_PACKAGES=()
+
+ESSENTIALS=(git vim tmux)
+COMPLEMENTS=(howdoi)
+
+install_from_array() {
+    local progs=($@)
+    for prog in ${progs[@]}; do
+        echo "Checking that '$prog' is installed."
+        if [[ ! -x $(command -v $prog) ]]; then
+            echo "Installing '$prog'..."
+            yes | sudo apt-get install $prog > /dev/null 2>&1
+        fi
+    done
+}
 
 # Display a usage message if no options given
 if [[ $# -eq 0 ]]; then
@@ -64,38 +79,6 @@ if [[ $? -ne 0 ]]; then
     exit 1
 fi
 
-# Ask to update the system
-echo -n "Update packages? [y/n]: "
-read answer
-if [[ "$answer" =~ ^[yY][eE]?[sS]?$ ]]; then # - TESTED on wsl
-
-    echo "Updating packages list..."
-    yes | sudo apt-get update > /dev/null 2>&1
-    echo "Upgrading packages..."
-    yes | sudo apt-get upgrade > /dev/null 2>&1
-    echo "Removing no longer needed packages..."
-    yes | sudo apt-get autoremove > /dev/null 2>&1
-
-fi
-
-echo "Checking that 'git' is installed." # - TESTED on wsl
-if [[ ! -x "$(command -v git)" ]]; then
-    echo "Installing 'git'..."
-    yes | sudo apt-get install git > /dev/null 2>&1
-fi
-
-echo "Checking that 'vim' is installed."
-if [[ ! -x $(command -v vim) ]]; then
-    echo "Installing 'vim'..."
-    yes | sudo apt-get install vim > /dev/null 2>&1
-fi
-
-echo "Checking that 'tmux' is installed." # - TESTED on wsl
-if [[ ! -x $(command -v tmux) ]]; then
-    echo "Installing 'tmux'..."
-    yes | sudo apt-get install tmux > /dev/null 2>&1
-fi
-
 # '-d' - Download the dot files - TESTED on wsl
 if [[ $DOT_FLAG -eq 1 ]]; then
     echo "Downloading the 'dotfiles' repository from git..."
@@ -107,46 +90,49 @@ if [[ $DOT_FLAG -eq 1 ]]; then
     rm -rf dotfiles
 fi
 
+# Ask to update the system
+echo -n "Update packages? [y/n]: "
+read ans
+if isyes $ans; then # - TESTED on wsl
+
+    echo "Updating packages list..."
+    yes | sudo apt-get update > /dev/null 2>&1
+    echo "Upgrading packages..."
+    yes | sudo apt-get upgrade > /dev/null 2>&1
+    echo "Removing no longer needed packages..."
+    yes | sudo apt-get autoremove > /dev/null 2>&1
+
+fi
+
+# Checking and installing programs from $ESSENTIALS array
+install_from_array ${ESSENTIALS[@]}
+
+# Checking and installing programs from $COMPLEMENTS array
+install_from_array ${COMPLEMENTS[@]}
+
 # '-f' - Download the fun programs - TESTED on wsl
 if [[ $FUN_FLAG -eq 1 ]]; then
 
+    # Check and install programs from $FUN_PROGS array
     echo "Checking that all fun programs are installed."
-    for program in "${FUN_PROGRAMS[@]}"; do
-        if [[ ! -x "$(command -v $program)" ]]; then
-            echo "Installing '$program'..."
-            yes | sudo apt-get install $program > /dev/null 2>&1
-        fi
-    done
+    install_from_array ${FUN_PROGS[@]}
 
 fi
 
 # '-p' - Download Python programs and packages - TESTED on wsl
 if [[ $PY_FLAG -eq 1 ]]; then
 
-    echo "Checking that 'python3' is installed."
-    if [[ ! -x $(command -v python3) ]]; then
-        echo "Installing 'python3'..."
-        yes | sudo apt-get install python3 > /dev/null 2>&1
-    fi
+    # Check and install programs from $PY_PROGS array
+    install_from_array ${PY_PROGS[@]}
 
+    # Install pip3
     echo "Checking that 'pip3' is installed."
     if [[ ! -x $(command -v pip3) ]]; then
         echo "Installing 'pip3'..."
         yes | sudo apt-get install python3-pip > /dev/null 2>&1
     fi
 
-    echo "Checking that 'pylint' is installed."
-    if [[ ! -x $(command -v pylint) ]]; then
-        echo "Installing 'pylint'..."
-        yes | sudo apt-get install pylint > /dev/null 2>&1
-    fi
-
-    echo "Checking that 'ipython' is installed."
-    if [[ ! -x $(command -v ipython) ]]; then
-        echo "Installing 'ipython'..."
-        yes | sudo apt-get install ipython > /dev/null 2>&1
-    fi
-
+    # Install pip packages
     echo "Checking that all required pip-packages are installed."
     for package in ${PIP_PACKAGES[@]}; do
         if ! pip3 show $package > /dev/null; then
