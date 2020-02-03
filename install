@@ -198,19 +198,15 @@ fi
 if [[ $SCHL_FLAG -eq 1 ]]; then
 
     echo "SCHOOL"
-    # if 'install' is being run not from school repo
-    if [[ ! "$(pwd)" =~ .+/school$ ]]; then
-        echo "  Downloading the 'school' repository from git..."
-        git clone $SCHOOL_GIT_REPO > /dev/null 2>&1
-    fi
+    echo "Setting up the 'school' scripts..."
 
-    echo "  Setting up the school scripts..."
+    # Make sure that .bin directory for scripts exists
     if [[ ! -d $HOME/.bin ]]; then
         mkdir $HOME/.bin
     fi
-    mv school/lesson $HOME/.bin
-    mv school/new $HOME/.bin
-    rm -rf school
+
+    cp lesson $HOME/.bin
+    cp new $HOME/.bin
     echo ""
 
 fi
