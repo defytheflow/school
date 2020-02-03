@@ -3,7 +3,7 @@
 usage() {
     echo -e "Installs files, packages and programs for coding lessons.\n"
     echo "Usage:"
-    echo -e "  install [-a] [-c] [-d] [-f] [-h] [-p] [-t]\n"
+    echo -e "  install [-a] [-c] [-d] [-f] [-h] [-p] [-s] [-t]\n"
     echo "Options:"
     echo "  -a    install all"
     echo "  -c    install C programs and packages"
@@ -11,6 +11,7 @@ usage() {
     echo "  -f    install fun programs"
     echo "  -h    displays a usage message"
     echo "  -p    install python programs and packages"
+    echo "  -s    download school scripts"
     echo "  -t    download templates"
     echo ""
 }
@@ -27,6 +28,9 @@ FUN_PROGS=(figlet lolcat cowsay cmatrix fortune rig)
 PY_FLAG=0
 PY_PROGS=(python3 ipython pylint)
 PIP_PACKAGES=()
+# -s
+SCHL_FLAG=0
+SCHOOL_GIT_REPO="https://github.com/defytheflow/school.git"
 # -t
 TMPL_FLAG=0
 TEMPLATES_GIT_REPO="https://github.com/defytheflow/templates.git"
@@ -54,13 +58,14 @@ if [[ $# -eq 0 ]]; then
 fi
 
 # Parse options
-while getopts ":acdfhpt" opt; do
+while getopts ":acdfhpst" opt; do
     case $opt in
         a)
             C_FLAG=1
             DOT_FLAG=1
             FUN_FLAG=1
             PY_FLAG=1
+            SCHL_FLAG=1
             TMPL_FLAG=1
             ;;
         c)
@@ -79,13 +84,17 @@ while getopts ":acdfhpt" opt; do
         p)
             PY_FLAG=1
             ;;
+        s)
+            SCHL_FLAG=1
+            ;;
         t)
             TMPL_FLAG=1
             ;;
         \?)
             usage
             echoerr "Error: unknown option '$OPTARG'"
-            exit 1     ;;
+            exit 1
+            ;;
     esac
 done
 
@@ -181,6 +190,27 @@ if [[ $PY_FLAG -eq 1 ]]; then
             pip3 install $package > /dev/null
         fi
     done
+    echo ""
+
+fi
+
+# '-s' - Download the school scripts
+if [[ $SCHL_FLAG -eq 1 ]]; then
+
+    echo "SCHOOL"
+    # if 'install' is being run not from school repo
+    if [[ ! "$(pwd)" =~ .+/school$ ]]; then
+        echo "  Downloading the 'school' repository from git..."
+        git clone $SCHOOL_GIT_REPO > /dev/null 2>&1
+    fi
+
+    echo "  Setting up the school scripts..."
+    if [[ ! -d $HOME/.bin ]]; then
+        mkdir $HOME/.bin
+    fi
+    mv school/lesson $HOME/.bin
+    mv school/new $HOME/.bin
+    rm -rf school
     echo ""
 
 fi
