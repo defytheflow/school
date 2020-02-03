@@ -133,14 +133,18 @@ if [[ $BEGIN_FLAG -eq 1 ]]; then
 
     # Check if $MAKEFILE_FLAG is on
     if [[ $MAKEFILE_FLAG -eq 1 ]]; then
+
+        # Check that 'new' script is installed
+        if [[ ! -x $(command -v new) ]]; then
+            echoerr "Error: command not found 'new'"
+            echoerr "Fix: run the install script"
+            exit 1
+        fi
+
         # In each $dir create a Makefile
         for dir in ${LESSON_DIRECTORIES[@]}; do
-            echo "# Generic C Makefile" >> $1/$dir/$MAKEFILE
-            echo "" >> $1/$dir/$MAKEFILE
-            echo "C_FLAGS=-g -O0 -Wall -Wextra -Werror -Wpedantic -std=c11" >> $1/$dir/$MAKEFILE
-            echo "" >> $1/$dir/$MAKEFILE
-            echo "%: %.c" >> $1/$dir/$MAKEFILE
-            echo -e '\tgcc $^ $(C_FLAGS) -o $@' >> $1/$dir/$MAKEFILE
+            new c-makefile
+            mv c-makefile $1/$dir/$MAKEFILE
         done
     fi
 
