@@ -19,19 +19,21 @@ LESSON_DIRECTORIES=(Examples Exercises Theory Whiteboard Programs Homework Todo)
 
 # How to use this script
 usage() {
-    echo "Generates a default directory structure for a lesson."
-    echo ""
+    echo -e "Generates a default directory structure for a lesson.\n"
     echo "Usage:"
-    echo "  lesson [-h] [-m] <command> <lesson_num>"
+    echo -e "  lesson [-h] [-m] <command> <lesson_num>\n"
+    echo "Arguments:"
+    echo "  command       name of the command"
+    echo "  lesson_num    the lesson number"
     echo ""
     echo "Options:"
-    echo "  -h       displays a help message"
-    echo "  -m       creates a makefile for c programs inside of each directory"
+    echo "  -h            displays a usage message"
+    echo "  -m            creates a c-makefile inside of each directory"
     echo ""
     echo "Commands:"
-    echo "  begin    creates the directories for the lesson"
-    echo "  end      removes unused directories for the lesson"
-    echo "  help     displays a help message"
+    echo "  begin         creates the directories for the lesson"
+    echo "  end           removes unused directories for the lesson"
+    echo "  help          displays a help message"
     echo ""
     echo "Examples:"
     echo "  lesson begin 1"
@@ -49,9 +51,9 @@ while getopts ":hm" opt; do
         m)
             MAKEFILE_FLAG=1
             ;;
-        *)
+        \?)
             usage
-            echoerr "Error: unknown option '$opt'"
+            echoerr "Error: unknown option '$OPTARG'"
             exit 1
             ;;
     esac
@@ -171,10 +173,10 @@ elif [[ $END_FLAG -eq 1 ]]; then
     done
 
     # Collect time-stats
-    lesson_duration=$(( $(date +%s) - $(stat -c "%Y" $1/.lesson_start) ))
-    seconds=$(( lesson_duration % 60 ))
-    minutes=$(( lesson_duration / 60 ))
-    hours=$(( lesson_duration / 3600 ))
+    duration=$(( $(date +%s) - $(stat -c "%Y" $1/.lesson_start) ))
+    seconds=$(( duration % 60 ))
+    minutes=$(( duration / 60 ))
+    hours=$(( duration / 3600 ))
 
     # Delete a time-stamp file
     rm $1/.lesson_start

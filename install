@@ -5,12 +5,13 @@ usage() {
     echo "Usage:"
     echo -e "  install [-a] [-c] [-d] [-f] [-h] [-p]\n"
     echo "Options:"
-    echo "  -a  install all"
-    echo "  -c  install C programs and packages"
-    echo "  -d  install dotfiles"
-    echo "  -f  install fun programs"
-    echo "  -h  help message"
-    echo "  -p  install python programs and packages"
+    echo "  -a    install all"
+    echo "  -c    install C programs and packages"
+    echo "  -d    install dotfiles"
+    echo "  -f    install fun programs"
+    echo "  -h    displays a usage message"
+    echo "  -p    install python programs and packages"
+    echo ""
 }
 
 # -c
@@ -30,6 +31,7 @@ ESSENTIALS=(git vim tmux)
 COMPLEMENTS=(howdoi)
 
 install_from_array() {
+
     local progs=($@)
     for prog in ${progs[@]}; do
         echo "  Checking that '$prog' is installed."
@@ -38,6 +40,7 @@ install_from_array() {
             yes | sudo apt-get install $prog > /dev/null 2>&1
         fi
     done
+
 }
 
 # Display a usage message if no options given
@@ -65,8 +68,9 @@ while getopts ":acdfhp" opt; do
             exit 0     ;;
         p)
             PY_FLAG=1  ;;
-        *)
+        \?)
             usage
+            echoerr "Error: unknown option '$OPTARG'"
             exit 1     ;;
     esac
 done
