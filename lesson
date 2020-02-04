@@ -178,9 +178,9 @@ elif [[ $END_FLAG -eq 1 ]]; then
 
     # Collect time-stats
     duration=$(( $(date +%s) - $(stat -c "%Y" $1/.lesson_start) ))
-    seconds=$(( duration % 60 ))
-    minutes=$(( duration / 60 ))
     hours=$(( duration / 3600 ))
+    minutes=$(( duration / 60 - hours * 60))
+    seconds=$(( duration % 60 ))
 
     # Delete a time-stamp file
     rm $1/.lesson_start
