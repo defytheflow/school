@@ -3,7 +3,7 @@
 usage() {
     echo -e "Installs files, packages and programs for coding lessons.\n"
     echo "Usage:"
-    echo -e "  install [-a] [-c] [-d] [-f] [-h] [-p] [-s] [-t]\n"
+    echo -e "  install [-a] [-c] [-d] [-f] [-h] [-p] [-s]\n"
     echo "Options:"
     echo "  -a    install all"
     echo "  -c    install C programs and packages"
@@ -11,8 +11,7 @@ usage() {
     echo "  -f    install fun programs"
     echo "  -h    displays a usage message"
     echo "  -p    install python programs and packages"
-    echo "  -s    download school scripts"
-    echo "  -t    download templates"
+    echo "  -s    set up school scripts"
     echo ""
 }
 
@@ -30,13 +29,9 @@ PY_PROGS=(python3 ipython pylint)
 PIP_PACKAGES=()
 # -s
 SCHL_FLAG=0
-SCHOOL_GIT_REPO="https://github.com/defytheflow/school.git"
-# -t
-TMPL_FLAG=0
-TEMPLATES_GIT_REPO="https://github.com/defytheflow/templates.git"
 
 ESSENTIALS=(git vim tmux)
-COMPLEMENTS=(howdoi)
+COMPLEMENTS=(howdoi tree)
 
 install_from_array() {
 
@@ -58,7 +53,7 @@ if [[ $# -eq 0 ]]; then
 fi
 
 # Parse options
-while getopts ":acdfhpst" opt; do
+while getopts ":acdfhps" opt; do
     case $opt in
         a)
             C_FLAG=1
@@ -66,7 +61,6 @@ while getopts ":acdfhpst" opt; do
             FUN_FLAG=1
             PY_FLAG=1
             SCHL_FLAG=1
-            TMPL_FLAG=1
             ;;
         c)
             C_FLAG=1
@@ -86,9 +80,6 @@ while getopts ":acdfhpst" opt; do
             ;;
         s)
             SCHL_FLAG=1
-            ;;
-        t)
-            TMPL_FLAG=1
             ;;
         \?)
             usage
@@ -205,24 +196,14 @@ if [[ $SCHL_FLAG -eq 1 ]]; then
         mkdir $HOME/.bin
     fi
 
-    cp lesson $HOME/.bin
-    cp new $HOME/.bin
-    echo ""
-
-fi
-
-# '-t' - Download
-if [[ $TMPL_FLAG -eq 1 ]]; then
-
-    echo "TEMPLATES"
-    echo "  Downloading the 'templates' repository from git..."
-    git clone $TEMPLATES_GIT_REPO > /dev/null 2>&1
-
-    echo "  Setting up the templates..."
+    # Set up .templates directory
     if [[ -d $HOME/.templates ]]; then
         rm -rf $HOME/.templates
     fi
     mv templates $HOME/.templates
+
+    cp lesson $HOME/.bin
+    cp new $HOME/.bin
     echo ""
 
 fi
