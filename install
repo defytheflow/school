@@ -189,7 +189,7 @@ fi
 if [[ $SCHL_FLAG -eq 1 ]]; then
 
     echo "SCHOOL"
-    echo "Setting up the 'school' scripts..."
+    echo "  Setting up the 'school' scripts..."
 
     # Make sure that .bin directory for scripts exists
     if [[ ! -d $HOME/.bin ]]; then
@@ -200,7 +200,7 @@ if [[ $SCHL_FLAG -eq 1 ]]; then
     if [[ -d $HOME/.templates ]]; then
         rm -rf $HOME/.templates
     fi
-    mv templates $HOME/.templates
+    cp templates $HOME/.templates
 
     cp lesson $HOME/.bin
     cp new $HOME/.bin
