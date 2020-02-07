@@ -1,21 +1,23 @@
 #!/bin/bash
 
 usage() {
-    echo -e "Installs files, packages and programs for coding lessons.\n"
+    echo -e "Installs scripts, packages and programs for coding lessons.\n"
     echo "Usage:"
-    echo -e "  install [options]\n"
+    echo -e "  ./install [options]\n"
     echo "Options:"
     echo "  -a    install all"
-    echo "  -c    install C programs and packages"
-    echo "  -d    download dotfiles"
-    echo "  -e    install entertainment programs"
-    echo "  -f    install fun programs"
-    echo "  -h    displays a usage message"
-    echo "  -P    installs productivity programs"
-    echo "  -p    install python programs and packages"
-    echo "  -S    download sdk scripts"
-    echo "  -s    set up school scripts"
+    echo "  -c    install C packages"
+    echo "  -d    download and set up 'dotfiles' repository"
+    echo "  -f    install programs for fun"
+    echo "  -h    display a usage message"
+    echo "  -j    install javascript packages"
+    echo "  -P    install programs for productivity"
+    echo "  -p    install python packages"
+    echo "  -S    download and set up scripts from 'sdk' repository"
+    echo "  -s    set up scripts from 'school' repository"
     echo ""
+    echo "Author:"
+    echo -e "  Artyom Danilov\n"
 }
 
 # -c
@@ -23,24 +25,28 @@ C_FLAG=0
 # -d
 DOT_FLAG=0
 DOTFILES_GIT_REPO="https://github.com/defytheflow/dotfiles.git"
-# -e
-ENT_FLAG=0
-ENT_PROGS=(youtube-dl)
 # -f
 FUN_FLAG=0
 FUN_PROGS=(figlet lolcat cowsay cmatrix fortune rig)
+# -j
+JS_FLAG=0
+declare -A JS_PACKAGES=(
+    ["npm"]="npm"
+)
 # -P
 PROD_FLAG=0
 declare -A PROD_PROGS=(
+    ["gtypist"]="gtypist"
     ["trans"]="translate-shell"
+    ["youtube-dl"]="youtube-dl"
 )
 # -p
 PY_FLAG=0
-declare -A PY_PROGS=(
-    ["python3"]="python3"
-    ["pip3"]="python3-pip"
+declare -A PY_PACKAGES=(
     ["ipython"]="ipython"
+    ["pip3"]="python3-pip"
     ["pylint"]="pylint"
+    ["python3"]="python3"
 )
 PIP_PACKAGES=()
 # -S
@@ -85,51 +91,40 @@ if [[ $# -eq 0 ]]; then
 fi
 
 # Parse options
-while getopts ":acdefhPpSs" opt; do
+while getopts ":acdfhjPpSs" opt; do
     case $opt in
         a)
             C_FLAG=1
             DOT_FLAG=1
-            ENT_FLAG=1
             FUN_FLAG=1
+            JS_FLAG=1
             PROD_FLAG=1
             PY_FLAG=1
             SDK_FLAG=1
-            SCHL_FLAG=1
-            ;;
+            SCHL_FLAG=1 ;;
         c)
-            C_FLAG=1
-            ;;
+            C_FLAG=1 ;;
         d)
-            DOT_FLAG=1
-            ;;
-        e)
-            ENT_FLAG=1
-            ;;
+            DOT_FLAG=1 ;;
         f)
-            FUN_FLAG=1
-            ;;
+            FUN_FLAG=1 ;;
         h)
             usage
-            exit 0
-            ;;
+            exit 0 ;;
+        j)
+            JS_FLAG=1 ;;
         P)
-            PROD_FLAG=1
-            ;;
+            PROD_FLAG=1 ;;
         p)
-            PY_FLAG=1
-            ;;
+            PY_FLAG=1 ;;
         S)
-            SDK_FLAG=1
-            ;;
+            SDK_FLAG=1 ;;
         s)
-            SCHL_FLAG=1
-            ;;
+            SCHL_FLAG=1 ;;
         \?)
             usage
             echoerr "Error: unknown option '$OPTARG'"
-            exit 1
-            ;;
+            exit 1 ;;
     esac
 done
 
@@ -157,12 +152,10 @@ if [[ "$ans" =~ ^[yY][eE]?[sS]?$ ]]; then # - TESTED on wsl
 fi
 echo ""
 
-# Checking and installing programs from $ESSENTIALS array
 echo "ESSENTIALS"
 install_from_array ${ESSENTIALS[@]}
 echo ""
 
-# Checking and installing programs from $COMPLEMENTS array
 echo "COMPLEMENTS"
 install_from_array ${COMPLEMENTS[@]}
 echo ""
@@ -178,57 +171,48 @@ if [[ $C_FLAG -eq 1 ]]; then
     echo ""
 fi
 
-# '-d' - Download the dot files - TESTED on wsl
+# '-d' - Download dotfiles - TESTED on wsl
 if [[ $DOT_FLAG -eq 1 ]]; then
     echo "DOTFILES"
-    echo "  Downloading the 'dotfiles' repository from git..."
+    echo "  Downloading 'dotfiles' repository from git..."
     git clone $DOTFILES_GIT_REPO > /dev/null 2>&1
 
-    echo "  Setting up the dotfiles..."
+    echo "  Setting up 'dotfiles'..."
     shopt -s dotglob
     mv dotfiles/* $HOME/ 2> /dev/null
     rm -rf dotfiles
     echo ""
 fi
 
-# '-e' - Install programs for entertainment
-if [[ $ENT_FLAG -eq 1 ]]; then
-
-    # Check and install programs from $ENT_PROGS array
-    echo "ENTERTAINMENT PROGRAMS"
-    install_from_array ${ENT_PROGS[@]}
-    echo ""
-fi
-
-# '-f' - Install the fun programs - TESTED on wsl
+# '-f' - Install fun programs - TESTED on wsl
 if [[ $FUN_FLAG -eq 1 ]]; then
-
-    # Check and install programs from $FUN_PROGS array
     echo "FUN PROGRAMS"
     install_from_array ${FUN_PROGS[@]}
     echo ""
 fi
 
-# '-P' - Install programs for productivity
-if [[ $PROD_FLAG -eq 1 ]]; then
+# '-j' - Install JavaScript packages
+if [[ $JS_FLAG -eq 1 ]]; then
+    echo "JAVA SCRIPT PACKAGES"
+    install_from_dict JS_PACKAGES
+    echo ""
+fi
 
+# '-P' - Install programs for productivity - TESTED on wsl
+if [[ $PROD_FLAG -eq 1 ]]; then
     echo "PRODUCTIVITY PROGRAMS"
     install_from_dict PROD_PROGS
     echo ""
-
 fi
 
-# '-p' - Install Python programs and packages - TESTED on wsl
+# '-p' - Install python packages - TESTED on wsl
 if [[ $PY_FLAG -eq 1 ]]; then
 
-    # Check and install programs from $PY_PROGS array
-    echo "PYTHON PROGRAMS"
-    install_from_dict PY_PROGS
+    echo "PYTHON PACKAGES"
+    install_from_dict PY_PACKAGES
     echo ""
 
     echo "PIP PACKAGES"
-    # Install pip packages
-    #echo "Checking that all required pip-packages are installed."
     for package in ${PIP_PACKAGES[@]}; do
         echo "Checking that '$package' is installed."
         if ! pip3 show $package > /dev/null; then
@@ -240,14 +224,14 @@ if [[ $PY_FLAG -eq 1 ]]; then
 
 fi
 
-# '-S' - Download te sdk scripts
+# '-S' - Download and set up scripts from 'sdk' repository
 if [[ $SDK_FLAG -eq 1 ]]; then
 
     echo "SDK"
-    echo "  Downloading the 'sdk' repository from git..."
+    echo "  Downloading 'sdk' repository from git..."
     git clone $SDK_GIT_REPO > /dev/null 2>&1
 
-    echo "  Setting up the 'sdk scripts..."
+    echo "  Setting up 'sdk' scripts..."
 
     if [[ -d $HOME/.templates ]]; then
         rm -rf $HOME/.templates
@@ -260,13 +244,12 @@ if [[ $SDK_FLAG -eq 1 ]]; then
 
 fi
 
-# '-s' - Set up the school scripts
+# '-s' - Set up the scripts from 'school' repository
 if [[ $SCHL_FLAG -eq 1 ]]; then
 
     echo "SCHOOL"
-    echo "  Setting up the 'school' scripts..."
+    echo "  Setting up 'school' scripts..."
 
-    # Make sure that .bin directory for scripts exists
     if [[ ! -d $HOME/.bin ]]; then
         mkdir $HOME/.bin
     fi
