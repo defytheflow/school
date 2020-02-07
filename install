@@ -8,9 +8,10 @@ usage() {
     echo "  -a    install all"
     echo "  -c    install C programs and packages"
     echo "  -d    download dotfiles"
+    echo "  -e    install entertainment programs"
     echo "  -f    install fun programs"
     echo "  -h    displays a usage message"
-    echo "  -p    installs productivity programs"
+    echo "  -P    installs productivity programs"
     echo "  -p    install python programs and packages"
     echo "  -S    download sdk scripts"
     echo "  -s    set up school scripts"
@@ -22,14 +23,25 @@ C_FLAG=0
 # -d
 DOT_FLAG=0
 DOTFILES_GIT_REPO="https://github.com/defytheflow/dotfiles.git"
+# -e
+ENT_FLAG=0
+ENT_PROGS=(youtube-dl)
 # -f
 FUN_FLAG=0
 FUN_PROGS=(figlet lolcat cowsay cmatrix fortune rig)
 # -P
 PROD_FLAG=0
+declare -A PROD_PROGS=(
+    ["trans"]="translate-shell"
+)
 # -p
 PY_FLAG=0
-PY_PROGS=(python3 ipython pylint)
+declare -A PY_PROGS=(
+    ["python3"]="python3"
+    ["pip3"]="python3-pip"
+    ["ipython"]="ipython"
+    ["pylint"]="pylint"
+)
 PIP_PACKAGES=()
 # -S
 SDK_FLAG=0
@@ -53,6 +65,19 @@ install_from_array() {
 
 }
 
+install_from_dict() {
+
+    local -n progs=$1
+    for prog in "${!progs[@]}"; do
+        echo "  Checking that '$prog' is installed."
+        if [[ ! -x $(command -v $prog) ]]; then
+            echo "  Installing '$prog'..."
+            yes | sudo apt-get install ${progs[$prog]} > /dev/null 2>&1
+        fi
+    done
+
+}
+
 # Display a usage message if no options given
 if [[ $# -eq 0 ]]; then
     usage
@@ -60,11 +85,12 @@ if [[ $# -eq 0 ]]; then
 fi
 
 # Parse options
-while getopts ":acdfhPpSs" opt; do
+while getopts ":acdefhPpSs" opt; do
     case $opt in
         a)
             C_FLAG=1
             DOT_FLAG=1
+            ENT_FLAG=1
             FUN_FLAG=1
             PROD_FLAG=1
             PY_FLAG=1
@@ -76,6 +102,9 @@ while getopts ":acdfhPpSs" opt; do
             ;;
         d)
             DOT_FLAG=1
+            ;;
+        e)
+            ENT_FLAG=1
             ;;
         f)
             FUN_FLAG=1
@@ -162,6 +191,15 @@ if [[ $DOT_FLAG -eq 1 ]]; then
     echo ""
 fi
 
+# '-e' - Install programs for entertainment
+if [[ $ENT_FLAG -eq 1 ]]; then
+
+    # Check and install programs from $ENT_PROGS array
+    echo "ENTERTAINMENT PROGRAMS"
+    install_from_array ${ENT_PROGS[@]}
+    echo ""
+fi
+
 # '-f' - Install the fun programs - TESTED on wsl
 if [[ $FUN_FLAG -eq 1 ]]; then
 
@@ -175,11 +213,7 @@ fi
 if [[ $PROD_FLAG -eq 1 ]]; then
 
     echo "PRODUCTIVITY PROGRAMS"
-    echo "  Checking that 'trans' is installed."
-    if [[ ! -x $(command -v trans) ]]; then
-        echo "  Installing 'trans'..."
-        yes | sudo apt-get install translate-shell > dev/null 2>&1
-    fi
+    install_from_dict PROD_PROGS
     echo ""
 
 fi
@@ -189,14 +223,7 @@ if [[ $PY_FLAG -eq 1 ]]; then
 
     # Check and install programs from $PY_PROGS array
     echo "PYTHON PROGRAMS"
-    install_from_array ${PY_PROGS[@]}
-
-    # Install pip3
-    echo "  Checking that 'pip3' is installed."
-    if [[ ! -x $(command -v pip3) ]]; then
-        echo "  Installing 'pip3'..."
-        yes | sudo apt-get install python3-pip > /dev/null 2>&1
-    fi
+    install_from_dict PY_PROGS
     echo ""
 
     echo "PIP PACKAGES"
