@@ -20,6 +20,8 @@ usage() {
     echo -e "  Artyom Danilov\n"
 }
 
+# -a
+ALL_FLAG=0
 # -c
 C_FLAG=0
 # -d
@@ -94,14 +96,7 @@ fi
 while getopts ":acdfhjPpSs" opt; do
     case $opt in
         a)
-            C_FLAG=1
-            DOT_FLAG=1
-            FUN_FLAG=1
-            JS_FLAG=1
-            PROD_FLAG=1
-            PY_FLAG=1
-            SDK_FLAG=1
-            SCHL_FLAG=1 ;;
+            ALL_FLAG=1 ;;
         c)
             C_FLAG=1 ;;
         d)
@@ -161,7 +156,7 @@ install_from_array ${COMPLEMENTS[@]}
 echo ""
 
 # '-c' Install C programs and packages
-if [[ $C_FLAG -eq 1 ]]; then
+if [[ $C_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
     echo "C PACKAGES"
     echo "  Checking that 'build-essential' package is insalled."
     if ! dpkg -s build-essential > /dev/null 2>&1; then
@@ -172,41 +167,42 @@ if [[ $C_FLAG -eq 1 ]]; then
 fi
 
 # '-d' - Download dotfiles - TESTED on wsl
-if [[ $DOT_FLAG -eq 1 ]]; then
+if [[ $DOT_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
     echo "DOTFILES"
     echo "  Downloading 'dotfiles' repository from git..."
     git clone $DOTFILES_GIT_REPO > /dev/null 2>&1
 
     echo "  Setting up 'dotfiles'..."
     shopt -s dotglob
-    mv dotfiles/* $HOME/ 2> /dev/null
+    find dotfiles -maxdepth 1 -type f -exec mv -i {} $HOME \;
+    #mv -i dotfiles/* $HOME
     rm -rf dotfiles
     echo ""
 fi
 
 # '-f' - Install fun programs - TESTED on wsl
-if [[ $FUN_FLAG -eq 1 ]]; then
+if [[ $FUN_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
     echo "FUN PROGRAMS"
     install_from_array ${FUN_PROGS[@]}
     echo ""
 fi
 
 # '-j' - Install JavaScript packages
-if [[ $JS_FLAG -eq 1 ]]; then
+if [[ $JS_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
     echo "JAVA SCRIPT PACKAGES"
     install_from_dict JS_PACKAGES
     echo ""
 fi
 
 # '-P' - Install programs for productivity - TESTED on wsl
-if [[ $PROD_FLAG -eq 1 ]]; then
+if [[ $PROD_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
     echo "PRODUCTIVITY PROGRAMS"
     install_from_dict PROD_PROGS
     echo ""
 fi
 
 # '-p' - Install python packages - TESTED on wsl
-if [[ $PY_FLAG -eq 1 ]]; then
+if [[ $PY_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
 
     echo "PYTHON PACKAGES"
     install_from_dict PY_PACKAGES
@@ -225,7 +221,7 @@ if [[ $PY_FLAG -eq 1 ]]; then
 fi
 
 # '-S' - Download and set up scripts from 'sdk' repository
-if [[ $SDK_FLAG -eq 1 ]]; then
+if [[ $SDK_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
 
     echo "SDK"
     echo "  Downloading 'sdk' repository from git..."
@@ -238,14 +234,14 @@ if [[ $SDK_FLAG -eq 1 ]]; then
     fi
 
     mv sdk/templates $HOME/.templates
-    mv sdk/new $HOME/.bin
+    cp -i sdk/new $HOME/.bin
     rm -rf sdk
     echo ""
 
 fi
 
 # '-s' - Set up the scripts from 'school' repository
-if [[ $SCHL_FLAG -eq 1 ]]; then
+if [[ $SCHL_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
 
     echo "SCHOOL"
     echo "  Setting up 'school' scripts..."
@@ -254,7 +250,7 @@ if [[ $SCHL_FLAG -eq 1 ]]; then
         mkdir $HOME/.bin
     fi
 
-    cp lesson $HOME/.bin
+    cp -i lesson $HOME/.bin
     echo ""
 
 fi
