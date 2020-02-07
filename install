@@ -3,7 +3,7 @@
 usage() {
     echo -e "Installs files, packages and programs for coding lessons.\n"
     echo "Usage:"
-    echo -e "  install [-a] [-c] [-d] [-f] [-h] [-p] [-s]\n"
+    echo -e "  install [-a] [-c] [-d] [-f] [-h] [-p] [-S] [-s]\n"
     echo "Options:"
     echo "  -a    install all"
     echo "  -c    install C programs and packages"
@@ -11,6 +11,7 @@ usage() {
     echo "  -f    install fun programs"
     echo "  -h    displays a usage message"
     echo "  -p    install python programs and packages"
+    echo "  -S    download sdk scripts"
     echo "  -s    set up school scripts"
     echo ""
 }
@@ -27,6 +28,9 @@ FUN_PROGS=(figlet lolcat cowsay cmatrix fortune rig)
 PY_FLAG=0
 PY_PROGS=(python3 ipython pylint)
 PIP_PACKAGES=()
+# -S
+SDK_FLAG=0
+SDK_GIT_REPO="https://github.com/defytheflow/sdk.git"
 # -s
 SCHL_FLAG=0
 
@@ -53,7 +57,7 @@ if [[ $# -eq 0 ]]; then
 fi
 
 # Parse options
-while getopts ":acdfhps" opt; do
+while getopts ":acdfhpSs" opt; do
     case $opt in
         a)
             C_FLAG=1
@@ -61,6 +65,7 @@ while getopts ":acdfhps" opt; do
             FUN_FLAG=1
             PY_FLAG=1
             SCHL_FLAG=1
+            SDK_FLAG=1
             ;;
         c)
             C_FLAG=1
@@ -77,6 +82,9 @@ while getopts ":acdfhps" opt; do
             ;;
         p)
             PY_FLAG=1
+            ;;
+        S)
+            SDK_FLAG=1
             ;;
         s)
             SCHL_FLAG=1
@@ -185,7 +193,27 @@ if [[ $PY_FLAG -eq 1 ]]; then
 
 fi
 
-# '-s' - Download the school scripts
+# '-S' - Download te sdk scripts
+if [[ $SDK_FLAG -eq 1 ]]; then
+
+    echo "SDK"
+    echo "  Downloading the 'sdk' repository from git..."
+    git clone $SDK_GIT_REPO > /dev/null 2>&1
+
+    echo "  Setting up the 'sdk scripts..."
+
+    if [[ -d $HOME/.templates ]]; then
+        rm -rf $HOME/.templates
+    fi
+
+    mv sdk/templates $HOME/.templates
+    mv sdk/new $HOME/.bin
+    rm -rf sdk
+    echo ""
+
+fi
+
+# '-s' - Set up the school scripts
 if [[ $SCHL_FLAG -eq 1 ]]; then
 
     echo "SCHOOL"
@@ -196,14 +224,7 @@ if [[ $SCHL_FLAG -eq 1 ]]; then
         mkdir $HOME/.bin
     fi
 
-    # Set up .templates directory
-    if [[ -d $HOME/.templates ]]; then
-        rm -rf $HOME/.templates
-    fi
-    cp templates $HOME/.templates
-
     cp lesson $HOME/.bin
-    cp new $HOME/.bin
     echo ""
 
 fi
