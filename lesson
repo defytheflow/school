@@ -189,6 +189,11 @@ elif [[ $END_FLAG -eq 1 ]]; then
 
     fi
 
+    # Collect file-stats
+
+    exercises_completed=0
+    programs_written=0
+
     is_csource() {
         if [[ "$(file $1)" =~ ^.+C[[:space:]]source.+$ ]]; then
             return 0
@@ -197,12 +202,10 @@ elif [[ $END_FLAG -eq 1 ]]; then
         fi
     }
 
-    # Collect file-stats
     for dir in ${LESSON_DIRECTORIES[@]}; do
         if [[ -d $1/$dir ]]; then
             case $dir in
                 Exercises)
-                    exercises_completed=0
                     for file in $(ls $1/$dir); do
                         if is_csource $1/$dir/$file; then
                             exercises_completed=$(( exercises_completed + 1 ))
@@ -210,7 +213,6 @@ elif [[ $END_FLAG -eq 1 ]]; then
                     done
                     ;;
                 Programs)
-                    programs_written=0
                     for file in $(ls $1/$dir); do
                         if is_csource $1/$dir/$file; then
                             programs_written=$(( programs_written + 1))
