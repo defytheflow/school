@@ -3,13 +3,14 @@
 usage() {
     echo -e "Installs files, packages and programs for coding lessons.\n"
     echo "Usage:"
-    echo -e "  install [-a] [-c] [-d] [-f] [-h] [-p] [-S] [-s]\n"
+    echo -e "  install [options]\n"
     echo "Options:"
     echo "  -a    install all"
     echo "  -c    install C programs and packages"
     echo "  -d    download dotfiles"
     echo "  -f    install fun programs"
     echo "  -h    displays a usage message"
+    echo "  -p    installs productivity programs"
     echo "  -p    install python programs and packages"
     echo "  -S    download sdk scripts"
     echo "  -s    set up school scripts"
@@ -24,6 +25,8 @@ DOTFILES_GIT_REPO="https://github.com/defytheflow/dotfiles.git"
 # -f
 FUN_FLAG=0
 FUN_PROGS=(figlet lolcat cowsay cmatrix fortune rig)
+# -P
+PROD_FLAG=0
 # -p
 PY_FLAG=0
 PY_PROGS=(python3 ipython pylint)
@@ -34,8 +37,8 @@ SDK_GIT_REPO="https://github.com/defytheflow/sdk.git"
 # -s
 SCHL_FLAG=0
 
-ESSENTIALS=(git vim tmux)
-COMPLEMENTS=(howdoi tree)
+ESSENTIALS=(git vim tmux tree)
+COMPLEMENTS=(howdoi shellcheck)
 
 install_from_array() {
 
@@ -57,15 +60,16 @@ if [[ $# -eq 0 ]]; then
 fi
 
 # Parse options
-while getopts ":acdfhpSs" opt; do
+while getopts ":acdfhPpSs" opt; do
     case $opt in
         a)
             C_FLAG=1
             DOT_FLAG=1
             FUN_FLAG=1
+            PROD_FLAG=1
             PY_FLAG=1
-            SCHL_FLAG=1
             SDK_FLAG=1
+            SCHL_FLAG=1
             ;;
         c)
             C_FLAG=1
@@ -79,6 +83,9 @@ while getopts ":acdfhpSs" opt; do
         h)
             usage
             exit 0
+            ;;
+        P)
+            PROD_FLAG=1
             ;;
         p)
             PY_FLAG=1
@@ -162,6 +169,19 @@ if [[ $FUN_FLAG -eq 1 ]]; then
     echo "FUN PROGRAMS"
     install_from_array ${FUN_PROGS[@]}
     echo ""
+fi
+
+# '-P' - Install programs for productivity
+if [[ $PROD_FLAG -eq 1 ]]; then
+
+    echo "PRODUCTIVITY PROGRAMS"
+    echo "  Checking that 'trans' is installed."
+    if [[ ! -x $(command -v trans) ]]; then
+        echo "  Installing 'trans'..."
+        yes | sudo apt-get install translate-shell > dev/null 2>&1
+    fi
+    echo ""
+
 fi
 
 # '-p' - Install Python programs and packages - TESTED on wsl
