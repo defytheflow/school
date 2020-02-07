@@ -257,13 +257,16 @@ if [[ $SCHL_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
     # C - library
     sudo cp -i includes/school.h /usr/local/include
 
-    # Compile
+    # Compile school lib
     gcc lib/school.c -c -fPIC > /dev/null
     gcc school.o -shared -o libschool.so
+    rm school.o
 
-    # Set up
+    # Set up school lib
     sudo mv -i libschool.so /usr/local/lib
 
+    # So that library changes took place
+    sudo ldconfig
     echo ""
 
 fi
