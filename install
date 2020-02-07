@@ -234,7 +234,8 @@ if [[ $SDK_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
     fi
 
     mv sdk/templates $HOME/.templates
-    cp -i sdk/new $HOME/.bin
+    cp -i sdk/new   $HOME/.bin
+    cp -i sdk/clean $HOME/.bin
     rm -rf sdk
     echo ""
 
@@ -253,7 +254,14 @@ if [[ $SCHL_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
     # Scripts
     cp -i lesson $HOME/.bin
 
-    echo "  Setting up 'school' library..."
+    echo "  Setting up Python 'school' library..."
+    if [[ ! -d $HOME/.lib ]]; then
+        mkdir $HOME/.lib
+    fi
+
+    cp -i lib/school.py $HOME/.lib
+
+    echo "  Setting up C 'school' library..."
     # C - library
     sudo cp -i includes/school.h /usr/local/include
 
