@@ -44,12 +44,12 @@ declare -A PROD_PROGS=(
 # -p
 PY_FLAG=0
 declare -A PY_PACKAGES=(
-    ["ipython"]="ipython"
-    ["pip3"]="python3-pip"
-    ["pylint"]="pylint"
     ["python3"]="python3"
+    ["pip3"]="python3-pip"
+    ["ipython"]="ipython"
+    ["pylint"]="pylint"
 )
-PIP_PACKAGES=()
+PIP_PACKAGES=("ipython")
 # -S
 SDK_FLAG=0
 SDK_GIT_REPO="https://github.com/defytheflow/sdk.git"
@@ -63,10 +63,14 @@ install_from_array() {
 
     local progs=($@)
     for prog in ${progs[@]}; do
-        echo "  Checking that '$prog' is installed."
+        printf "%-60s" "  Checking that'$prog' is installed."
+        # echo -n "  Checking that '$prog' is installed."
         if [[ ! -x $(command -v $prog) ]]; then
             echo "  Installing '$prog'..."
-            yes | sudo apt-get install $prog > /dev/null 2>&1
+            yes | sudo apt-get install $prog
+            clear
+        else
+            printf "%10s\n" "[ OK ]"
         fi
     done
 
@@ -76,10 +80,13 @@ install_from_dict() {
 
     local -n progs=$1
     for prog in "${!progs[@]}"; do
-        echo "  Checking that '$prog' is installed."
+        printf "%-60s" "  Checking that'$prog' is installed."
         if [[ ! -x $(command -v $prog) ]]; then
             echo "  Installing '$prog'..."
-            yes | sudo apt-get install ${progs[$prog]} > /dev/null 2>&1
+            yes | sudo apt-get install ${progs[$prog]}
+            clear
+        else
+            printf "%10s\n" "[ OK ]"
         fi
     done
 
@@ -132,9 +139,10 @@ fi
 echo ""
 
 # Ask to update the system
+# TESTS: ubuntu - OK, wsl - OK
 echo -n "Update packages? [y/n]: "
 read ans
-if [[ "$ans" =~ ^[yY]$ ]]; then # - TESTED on wsl
+if [[ "$ans" =~ ^[yY]$ ]]; then
 
     echo "Updating packages list..."
     yes | sudo apt-get update
@@ -142,10 +150,14 @@ if [[ "$ans" =~ ^[yY]$ ]]; then # - TESTED on wsl
     yes | sudo apt-get upgrade
     echo "Removing no longer needed packages..."
     yes | sudo apt-get autoremove
+    echo "Running dpkg --configure -a"
+    # WSL always asks to run this command, without it fails to install
+    sudo dpkg --configure -a > /dev/null 2>&1
     clear
 
 fi
 echo ""
+
 
 echo "ESSENTIALS"
 install_from_array ${ESSENTIALS[@]}
@@ -156,19 +168,22 @@ install_from_array ${COMPLEMENTS[@]}
 echo ""
 
 # '-c' Install C programs and packages
-# TESTS: ubuntu - OK
+# TESTS: ubuntu - OK, wsl - OK
 if [[ $C_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
     echo "C PACKAGES"
-    echo "  Checking that 'build-essential' package is insalled."
+    printf "%-60s" "Checking that 'build-essential' package is insalled."
     if ! dpkg -s build-essential > /dev/null 2>&1; then
         echo "Installing the 'build-essential package'"
-        yes | sudo apt-get install build-essential > /dev/null 2>&1
+        yes | sudo apt-get install build-essential
+        clear
+    else
+        printf "%10s\n" "[ OK ]"
+        echo ""
     fi
-    echo ""
 fi
 
 # '-d' - Download dotfiles
-# TESTS: ubuntu - OK
+# TESTS: ubuntu - OK, wsl - OK
 if [[ $DOT_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
     echo "DOTFILES"
     echo "  Downloading 'dotfiles' repository from git..."
@@ -182,7 +197,7 @@ if [[ $DOT_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
 fi
 
 # '-f' - Install fun programs
-# TESTS: ubuntu - OK
+# TESTS: ubuntu - OK, wsl - OK
 if [[ $FUN_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
     echo "FUN PROGRAMS"
     install_from_array ${FUN_PROGS[@]}
@@ -190,7 +205,7 @@ if [[ $FUN_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
 fi
 
 # '-j' - Install JavaScript packages
-# TESTS: ubuntu - OK
+# TESTS: ubuntu - OK, wsl - OK
 if [[ $JS_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
     echo "JAVA SCRIPT PACKAGES"
     install_from_dict JS_PACKAGES
@@ -198,7 +213,7 @@ if [[ $JS_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
 fi
 
 # '-P' - Install programs for productivity
-# TESTS: ubuntu - OK
+# TESTS: ubuntu - OK, wsl - OK
 if [[ $PROD_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
     echo "PRODUCTIVITY PROGRAMS"
     install_from_dict PROD_PROGS
@@ -206,7 +221,7 @@ if [[ $PROD_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
 fi
 
 # '-p' - Install python packages - TESTED on wsl
-# TESTS: ubuntu - OK
+# TESTS: ubuntu - OK, wsl - BUG on ipython
 if [[ $PY_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
 
     echo "PYTHON PACKAGES"
@@ -215,10 +230,12 @@ if [[ $PY_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
 
     echo "PIP PACKAGES"
     for package in ${PIP_PACKAGES[@]}; do
-        echo "Checking that '$package' is installed."
+        printf "%-60s" "Checking that '$package' is installed."
         if ! pip3 show $package > /dev/null; then
             echo "Installing '$package'..."
             pip3 install $package > /dev/null
+        else
+            printf "%10s\n" "[ OK ]"
         fi
     done
     echo ""
@@ -226,7 +243,7 @@ if [[ $PY_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
 fi
 
 # '-S' - Download and set up scripts from 'sdk' repository
-# TESTS: ubuntu - OK
+# TESTS: ubuntu - OK, wsl - OK
 if [[ $SDK_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
 
     echo "SDK"
@@ -250,7 +267,7 @@ if [[ $SDK_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
 fi
 
 # '-s' - Set up Scripts and Libraries from 'school' repository
-# TESTS: ubuntu - OK
+# TESTS: ubuntu - OK, wsl - OK
 if [[ $SCHL_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
 
     echo "SCHOOL"
@@ -277,7 +294,9 @@ if [[ $SCHL_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
 
     # Set up C school lib
     sudo mv -i libschool.so /usr/local/lib
-
+    if [[ -f libschool.so ]]; then
+        rm libschool.so
+    fi
     # So that library changes took place
     sudo ldconfig
     echo ""
