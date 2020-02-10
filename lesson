@@ -102,7 +102,7 @@ if [[ ! "$1" -le $MAX_LESSON_NUM ]]; then
     echo "$1 exceeds the MAX_LESSON_NUM"
     echo -n "Proceed? [y/n]: "
     read ans
-    if ! isyes $ans; then
+    if [[ ! "$ans" =~ ^[yY]$ ]]; then
         exit 0
     fi
 fi
@@ -112,7 +112,7 @@ if [[ ! "$(pwd)" =~ .+/$LESSONS_DIR$ ]]; then
     echo "Not inside '$LESSONS_DIR' directory"
     echo -n "Proceed? [y/n]: "
     read ans
-    if ! isyes $ans; then
+    if [[ ! "$ans" =~ ^[yY]$ ]]; then
         exit 0
     fi
 fi
@@ -152,7 +152,7 @@ if [[ $BEGIN_FLAG -eq 1 ]]; then
     touch $1/.lesson_start
 
     # Begin screen
-    echo -e "Welcome to Lesson #$1, $USERNAME!\n"
+    echo -e "Welcome to Lesson #$1, $(whoami)!\n"
     echo -e "Remember to express your ideas:\n"
     echo -e " 1. Correctly\n"
     echo -e " 2. Simply\n"
@@ -194,27 +194,23 @@ elif [[ $END_FLAG -eq 1 ]]; then
     exercises_completed=0
     programs_written=0
 
-    is_csource() {
-        if [[ "$(file $1)" =~ ^.+C[[:space:]]source.+$ ]]; then
-            return 0
-        else
-            return 1
-        fi
-    }
-
     for dir in ${LESSON_DIRECTORIES[@]}; do
         if [[ -d $1/$dir ]]; then
             case $dir in
                 Exercises)
                     for file in $(ls $1/$dir); do
-                        if is_csource $1/$dir/$file; then
+                        if [[ "$(file $1/$dir/$file)" =~ "C source" ]]; then
+                            exercises_completed=$(( exercises_completed + 1 ))
+                        elif [[ "$(file $1/$dir/$file)" =~ "Python script" ]]; then
                             exercises_completed=$(( exercises_completed + 1 ))
                         fi
                     done
                     ;;
                 Programs)
                     for file in $(ls $1/$dir); do
-                        if is_csource $1/$dir/$file; then
+                        if  [[ "$(file $1/$dir/$file)" =~ "C source" ]]; then
+                            programs_written=$(( programs_written + 1))
+                        elif [[ "$(file $1/$dir/$file)" =~ "Python script" ]]; then
                             programs_written=$(( programs_written + 1))
                         fi
                     done
