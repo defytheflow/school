@@ -17,6 +17,8 @@ MAX_LESSON_NUM=100
 LESSONS_DIR="Lessons"
 LESSON_DIRECTORIES=(Examples Exercises Theory Whiteboard Programs Homework Todo)
 
+HELP_MESSAGE="Try: 'lesson -h' for more information"
+
 # How to use this script
 usage() {
     echo -e "Generates a default directory structure for a lesson.\n"
@@ -52,8 +54,8 @@ while getopts ":hm" opt; do
             MAKEFILE_FLAG=1
             ;;
         \?)
-            usage
             echoerr "Error: unknown option '$OPTARG'"
+            echoerr $HELP_MESSAGE
             exit 1
             ;;
     esac
@@ -64,8 +66,8 @@ shift $((OPTIND - 1))
 
 # Check the <command> and <lesson_num> arguments are given
 if [[ $# -lt 2 ]]; then
-    usage
     echoerr "Error: missing <command> <lesson_num> arguments"
+    echoerr $HELP_MESSAGE
     exit 1
 fi
 
@@ -84,8 +86,8 @@ case $1 in
         exit 0
         ;;
     *)
-        usage
-        echoerr "Error: unknown command '$COMMAND'"
+        echoerr "Error: unknown command '$1'"
+        echoerr $HELP_MESSAGE
         exit 1
         ;;
 esac
@@ -137,7 +139,7 @@ if [[ $BEGIN_FLAG -eq 1 ]]; then
         # Check that 'new' script is installed
         if [[ ! -x $(command -v new) ]]; then
             echoerr "Error: command not found 'new'"
-            echoerr "Fix: run the install script"
+            echoerr "Fix: run the 'install' script"
             exit 1
         fi
 
@@ -167,12 +169,15 @@ elif [[ $END_FLAG -eq 1 ]]; then
     fi
 
     for dir in ${LESSON_DIRECTORIES[@]}; do
+
         # If $dir exists and $dir is empty
         if [[ -d $1/$dir ]] && isempty $1/$dir; then
             rm -r $1/$dir
+
         # If $dir only has a $MAKEFILE inside
         elif [[ -f $1/$dir/$MAKEFILE && $(filenum $1/$dir) -eq 1 ]]; then
             rm -r $1/$dir
+
         fi
     done
 
