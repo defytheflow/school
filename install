@@ -3,7 +3,7 @@
 usage() {
     echo -e "Installs scripts, packages and programs for coding lessons.\n"
     echo "Usage:"
-    echo -e "  ./install [options]\n"
+    echo -e "  install [options]\n"
     echo "Options:"
     echo "  -a    install all"
     echo "  -c    install C packages"
@@ -39,7 +39,6 @@ declare -A JS_PACKAGES=(
 PROD_FLAG=0
 declare -A PROD_PROGS=(
     ["gtypist"]="gtypist"
-    ["trans"]="translate-shell"
     ["youtube-dl"]="youtube-dl"
 )
 # -p
@@ -58,7 +57,7 @@ SDK_GIT_REPO="https://github.com/defytheflow/sdk.git"
 SCHL_FLAG=0
 
 ESSENTIALS=(git vim tmux tree)
-COMPLEMENTS=(howdoi shellcheck)
+COMPLEMENTS=(howdoi)
 
 install_from_array() {
 
@@ -135,14 +134,15 @@ echo ""
 # Ask to update the system
 echo -n "Update packages? [y/n]: "
 read ans
-if [[ "$ans" =~ ^[yY][eE]?[sS]?$ ]]; then # - TESTED on wsl
+if [[ "$ans" =~ ^[yY]$ ]]; then # - TESTED on wsl
 
     echo "Updating packages list..."
-    yes | sudo apt-get update > /dev/null 2>&1
+    yes | sudo apt-get update
     echo "Upgrading packages..."
-    yes | sudo apt-get upgrade > /dev/null 2>&1
+    yes | sudo apt-get upgrade
     echo "Removing no longer needed packages..."
-    yes | sudo apt-get autoremove > /dev/null 2>&1
+    yes | sudo apt-get autoremove
+    clear
 
 fi
 echo ""
@@ -156,6 +156,7 @@ install_from_array ${COMPLEMENTS[@]}
 echo ""
 
 # '-c' Install C programs and packages
+# TESTS: ubuntu - OK
 if [[ $C_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
     echo "C PACKAGES"
     echo "  Checking that 'build-essential' package is insalled."
@@ -166,7 +167,8 @@ if [[ $C_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
     echo ""
 fi
 
-# '-d' - Download dotfiles - TESTED on wsl
+# '-d' - Download dotfiles
+# TESTS: ubuntu - OK
 if [[ $DOT_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
     echo "DOTFILES"
     echo "  Downloading 'dotfiles' repository from git..."
@@ -175,12 +177,12 @@ if [[ $DOT_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
     echo "  Setting up 'dotfiles'..."
     shopt -s dotglob
     find dotfiles -maxdepth 1 -type f -exec mv -i {} $HOME \;
-    #mv -i dotfiles/* $HOME
     rm -rf dotfiles
     echo ""
 fi
 
-# '-f' - Install fun programs - TESTED on wsl
+# '-f' - Install fun programs
+# TESTS: ubuntu - OK
 if [[ $FUN_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
     echo "FUN PROGRAMS"
     install_from_array ${FUN_PROGS[@]}
@@ -188,13 +190,15 @@ if [[ $FUN_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
 fi
 
 # '-j' - Install JavaScript packages
+# TESTS: ubuntu - OK
 if [[ $JS_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
     echo "JAVA SCRIPT PACKAGES"
     install_from_dict JS_PACKAGES
     echo ""
 fi
 
-# '-P' - Install programs for productivity - TESTED on wsl
+# '-P' - Install programs for productivity
+# TESTS: ubuntu - OK
 if [[ $PROD_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
     echo "PRODUCTIVITY PROGRAMS"
     install_from_dict PROD_PROGS
@@ -202,6 +206,7 @@ if [[ $PROD_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
 fi
 
 # '-p' - Install python packages - TESTED on wsl
+# TESTS: ubuntu - OK
 if [[ $PY_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
 
     echo "PYTHON PACKAGES"
@@ -221,6 +226,7 @@ if [[ $PY_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
 fi
 
 # '-S' - Download and set up scripts from 'sdk' repository
+# TESTS: ubuntu - OK
 if [[ $SDK_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
 
     echo "SDK"
@@ -229,30 +235,29 @@ if [[ $SDK_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
 
     echo "  Setting up 'sdk' scripts..."
 
+    # 'new' script
     if [[ -d $HOME/.templates ]]; then
         rm -rf $HOME/.templates
     fi
+    cp -r sdk/templates $HOME/.templates
+    sudo cp -i sdk/new   /usr/local/bin
 
-    mv sdk/templates $HOME/.templates
-    cp -i sdk/new   $HOME/.bin
-    cp -i sdk/clean $HOME/.bin
+    # 'clean' script
+    sudo cp -i sdk/clean /usr/local/bin
     rm -rf sdk
     echo ""
 
 fi
 
-# '-s' - Set up the scripts and libs from 'school' repository
+# '-s' - Set up Scripts and Libraries from 'school' repository
+# TESTS: ubuntu - OK
 if [[ $SCHL_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
 
     echo "SCHOOL"
     echo "  Setting up 'school' scripts..."
 
-    if [[ ! -d $HOME/.bin ]]; then
-        mkdir $HOME/.bin
-    fi
-
-    # Scripts
-    cp -i lesson $HOME/.bin
+    # 'lesson' script
+    sudo cp -i lesson /usr/local/bin
 
     echo "  Setting up Python 'school' library..."
     if [[ ! -d $HOME/.lib ]]; then
@@ -270,7 +275,7 @@ if [[ $SCHL_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
     gcc school.o -shared -o libschool.so
     rm school.o
 
-    # Set up school lib
+    # Set up C school lib
     sudo mv -i libschool.so /usr/local/lib
 
     # So that library changes took place
