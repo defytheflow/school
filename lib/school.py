@@ -3,6 +3,7 @@
 """
 
 import sys
+import readline
 
 
 def get_int(prompt: str="", force: bool=False) -> int:

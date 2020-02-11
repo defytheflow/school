@@ -2,6 +2,8 @@
 
 # Options:
 
+# -f
+FORCE_FLAG=0
 # -m
 MAKEFILE_FLAG=0
 MAKEFILE="Makefile"
@@ -23,12 +25,13 @@ HELP_MESSAGE="Try: 'lesson -h' for more information"
 usage() {
     echo -e "Generates a default directory structure for a lesson.\n"
     echo "Usage:"
-    echo -e "  lesson [-h] [-m] <command> <lesson_num>\n"
+    echo -e "  lesson [options] <command> <lesson_num>\n"
     echo "Arguments:"
     echo "  command       name of the command"
     echo "  lesson_num    the lesson number"
     echo ""
     echo "Options:"
+    echo "  -f            disable warnings"
     echo "  -h            displays a usage message"
     echo "  -m            creates a c-makefile inside of each directory"
     echo ""
@@ -44,8 +47,10 @@ usage() {
 }
 
 # Parse Options
-while getopts ":hm" opt; do
+while getopts ":fhm" opt; do
     case $opt in
+        f)
+            FORCE_FLAG=1 ;;
         h)
             usage
             exit 0
@@ -101,21 +106,25 @@ fi
 
 # Check if <lesson_num> argument is less than or equal MAX_LESSON_NUM
 if [[ ! "$1" -le $MAX_LESSON_NUM ]]; then
-    echo "$1 exceeds the MAX_LESSON_NUM"
-    echo -n "Proceed? [y/n]: "
-    read ans
-    if [[ ! "$ans" =~ ^[yY]$ ]]; then
-        exit 0
+    if [[ $FORCE_FLAG -ne 1 ]]; then
+        echo "$1 exceeds the MAX_LESSON_NUM"
+        echo -n "Proceed? [y/n]: "
+        read ans
+        if [[ ! "$ans" =~ ^[yY]$ ]]; then
+            exit 0
+        fi
     fi
 fi
 
 # Check if inside of LESSONS_DIR directory
 if [[ ! "$(pwd)" =~ .+/$LESSONS_DIR$ ]]; then
-    echo "Not inside '$LESSONS_DIR' directory"
-    echo -n "Proceed? [y/n]: "
-    read ans
-    if [[ ! "$ans" =~ ^[yY]$ ]]; then
-        exit 0
+    if [[ $FORCE_FLAG -ne 1 ]]; then
+        echo "Not inside '$LESSONS_DIR' directory"
+        echo -n "Proceed? [y/n]: "
+        read ans
+        if [[ ! "$ans" =~ ^[yY]$ ]]; then
+            exit 0
+        fi
     fi
 fi
 
@@ -153,12 +162,22 @@ if [[ $BEGIN_FLAG -eq 1 ]]; then
     # Create a time-stamp file
     touch $1/.lesson_start
 
-    # Begin screen
-    echo -e "Welcome to Lesson #$1, $(whoami)!\n"
-    echo -e "Remember to express your ideas:\n"
-    echo -e " 1. Correctly\n"
-    echo -e " 2. Simply\n"
-    echo -e " 3. Efficiently\n"
+    # Print Begin screen
+    columns=$(tput cols)
+    printf "%0.s-" $(seq 1 $columns)
+    echo ""
+    echo ""
+    echoc "Welcome to Lesson #$1, $(whoami)!"
+    echo ""
+    echoc "Remember to express your ideas:"
+    echo ""
+    echoc " 1. Correctly"
+    echo ""
+    echoc " 2. Simply"
+    echo ""
+    echoc " 3. Efficiently"
+    echo ""
+    printf "%0.s-" $(seq 1 $columns)
 
 elif [[ $END_FLAG -eq 1 ]]; then
 
@@ -224,12 +243,21 @@ elif [[ $END_FLAG -eq 1 ]]; then
         fi
     done
 
-    # End screen
-    echo -e "End of lesson #$1. Goodbye, $(whoami)!\n"
-    echo -e "Stats:\n"
-    echo -e " 1. Lesson took $hours:$minutes:$seconds\n"
-    echo -e " 2. Exercises completed: $exercises_completed\n"
-    echo -e " 3. Programs written: $programs_written\n"
+    # Print End screen
+    columns=$(tput cols)
+    printf "%0.s-" $(seq 1 $columns)
+    echo ""
+    echoc "End of lesson #$1. Goodbye, $(whoami)!"
+    echo ""
+    echoc "Stats:"
+    echo ""
+    echoc " 1. Lesson took $hours:$minutes:$seconds"
+    echo ""
+    echoc " 2. Exercises completed: $exercises_completed"
+    echo ""
+    echoc " 3. Programs written: $programs_written"
+    echo ""
+    printf "%0.s-" $(seq 1 $columns)
 
     # If no files were created, remove the lesson dir as well
     if isempty $1; then
