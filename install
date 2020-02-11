@@ -170,16 +170,34 @@ echo ""
 # '-c' Install C programs and packages
 # TESTS: ubuntu - OK, wsl - OK
 if [[ $C_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
+
     echo "C PACKAGES"
-    printf "%-60s" "Checking that 'build-essential' package is insalled."
+    printf "%-60s" "  Checking that 'build-essential' package is insalled."
     if ! dpkg -s build-essential > /dev/null 2>&1; then
         echo "Installing the 'build-essential package'"
         yes | sudo apt-get install build-essential
         clear
     else
         printf "%10s\n" "[ OK ]"
-        echo ""
     fi
+
+    echo "  Setting up C 'school' library..."
+    # C - library
+    sudo cp -i includes/school.h /usr/local/include
+
+    # Compile school lib
+    gcc lib/school.c -c -fPIC > /dev/null
+    gcc school.o -shared -o libschool.so
+    rm school.o
+
+    # Set up C school lib
+    sudo mv -i libschool.so /usr/local/lib
+    if [[ -f libschool.so ]]; then
+        rm libschool.so
+    fi
+    # So that library changes took place
+    sudo ldconfig
+    echo ""
 fi
 
 # '-d' - Download dotfiles
@@ -230,7 +248,7 @@ if [[ $PY_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
 
     echo "PIP PACKAGES"
     for package in ${PIP_PACKAGES[@]}; do
-        printf "%-60s" "Checking that '$package' is installed."
+        printf "%-60s" "  Checking that '$package' is installed."
         if ! pip3 show $package > /dev/null; then
             echo "Installing '$package'..."
             pip3 install $package > /dev/null
@@ -238,6 +256,13 @@ if [[ $PY_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
             printf "%10s\n" "[ OK ]"
         fi
     done
+    echo ""
+
+    echo "  Setting up Python 'school' library..."
+    if [[ ! -d $HOME/.lib ]]; then
+        mkdir $HOME/.lib
+    fi
+    cp -i lib/school.py $HOME/.lib
     echo ""
 
 fi
@@ -266,7 +291,7 @@ if [[ $SDK_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
 
 fi
 
-# '-s' - Set up Scripts and Libraries from 'school' repository
+# '-s' - Set up Scripts from 'school' repository
 # TESTS: ubuntu - OK, wsl - OK
 if [[ $SCHL_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
 
@@ -275,30 +300,6 @@ if [[ $SCHL_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
 
     # 'lesson' script
     sudo cp -i lesson /usr/local/bin
-
-    echo "  Setting up Python 'school' library..."
-    if [[ ! -d $HOME/.lib ]]; then
-        mkdir $HOME/.lib
-    fi
-
-    cp -i lib/school.py $HOME/.lib
-
-    echo "  Setting up C 'school' library..."
-    # C - library
-    sudo cp -i includes/school.h /usr/local/include
-
-    # Compile school lib
-    gcc lib/school.c -c -fPIC > /dev/null
-    gcc school.o -shared -o libschool.so
-    rm school.o
-
-    # Set up C school lib
-    sudo mv -i libschool.so /usr/local/lib
-    if [[ -f libschool.so ]]; then
-        rm libschool.so
-    fi
-    # So that library changes took place
-    sudo ldconfig
     echo ""
 
 fi
