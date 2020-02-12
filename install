@@ -263,6 +263,7 @@ if [[ $PY_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
         mkdir $HOME/.lib
     fi
     cp -i lib/school.py $HOME/.lib
+    cp -i lib/utils.py $HOME/.lib
     echo ""
 
 fi
