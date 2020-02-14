@@ -5,56 +5,56 @@ usage() {
     echo "Usage:"
     echo -e "  install [options]\n"
     echo "Options:"
-    echo "  -a    install all"
-    echo "  -c    install C packages"
-    echo "  -d    download and set up 'dotfiles' repository"
-    echo "  -f    install programs for fun"
-    echo "  -h    display a usage message"
-    echo "  -j    install javascript packages"
-    echo "  -P    install programs for productivity"
-    echo "  -p    install python packages"
-    echo "  -S    download and set up scripts from 'sdk' repository"
-    echo "  -s    set up scripts and libs from 'school' repository"
+    echo "  -a, --all         install all."
+    echo "  -c                install C packages."
+    echo "  -d, --dotfiles    download and set up 'dotfiles' repository."
+    echo "  -f, --fun         install programs for fun."
+    echo "  -h, --help        display a usage message."
+    echo "  -j, --js          install javascript packages."
+    echo "  -P, --product     install programs for 'productivity'."
+    echo "  -p, --python      install python packages."
+    echo "  -S, --sdk         download and set up scripts from 'sdk' repo."
+    echo "  -s, --school      set up scripts and libs from 'school' repo."
     echo ""
     echo "Author:"
     echo -e "  Artyom Danilov\n"
 }
 
-# -a
-ALL_FLAG=0
-# -c
-C_FLAG=0
-# -d
-DOT_FLAG=0
-DOTFILES_GIT_REPO="https://github.com/defytheflow/dotfiles.git"
-# -f
-FUN_FLAG=0
-FUN_PROGS=(figlet lolcat cowsay cmatrix fortune rig)
-# -j
-JS_FLAG=0
+declare -A FLAGS=(
+    [all]=0   # -a, --all
+    [c]=0     # -c
+    [dot]=0   # -d, --dotfiles
+    [fun]=0   # -f, --fun
+    [js]=0    # -j, --js
+    [prod]=0  # -P, --product
+    [py]=0    # -p, --python
+    [sdk]=0   # -S, --sdk
+    [schl]=0  # -s, --school
+)
+
+declare -A GIT_REPOS=(
+    [dot]="https://github.com/defytheflow/dotfiles.git"
+    [sdk]="https://github.com/defytheflow/sdk.git"
+)
+
 declare -A JS_PACKAGES=(
     ["npm"]="npm"
 )
-# -P
-PROD_FLAG=0
-declare -A PROD_PROGS=(
-    ["gtypist"]="gtypist"
-    ["youtube-dl"]="youtube-dl"
-)
-# -p
-PY_FLAG=0
+
 declare -A PY_PACKAGES=(
     ["python3"]="python3"
     ["pip3"]="python3-pip"
     ["ipython"]="ipython"
     ["pylint3"]="pylint3"
 )
+
+declare -A PROD_PROGS=(
+    ["gtypist"]="gtypist"
+    ["youtube-dl"]="youtube-dl"
+)
+
 PIP_PACKAGES=("ipython")
-# -S
-SDK_FLAG=0
-SDK_GIT_REPO="https://github.com/defytheflow/sdk.git"
-# -s
-SCHL_FLAG=0
+FUN_PROGS=(figlet lolcat cowsay cmatrix fortune rig)
 
 ESSENTIALS=(git vim tmux tree)
 COMPLEMENTS=(howdoi)
@@ -99,34 +99,47 @@ if [[ $# -eq 0 ]]; then
 fi
 
 # Parse options
-while getopts ":acdfhjPpSs" opt; do
-    case $opt in
-        a)
-            ALL_FLAG=1 ;;
-        c)
-            C_FLAG=1 ;;
-        d)
-            DOT_FLAG=1 ;;
-        f)
-            FUN_FLAG=1 ;;
-        h)
+short_options="acdfhjPpSs"
+long_options="all,dotfiles,fun,help,js,product,python,school,sdk"
+
+options=$(getopt -o $short_options -l $long_options -- "$@")
+
+if [[ $? -ne 0 ]]; then
+    echoerr "Try 'install -h | --help' for more information."
+    exit 1
+fi
+
+eval set -- "$options"  # sets $options as script arguments
+
+# Set options
+while true; do
+    case "$1" in
+        -a | --all)
+            FLAGS[all]=1    ;;
+        -c)
+            FLAGS[c]=1      ;;
+        -d | --dotfiles)
+            FLAGS[dot]=1    ;;
+        -f | --fun)
+            FLAGS[fun]=1    ;;
+        -h | --help)
             usage
-            exit 0 ;;
-        j)
-            JS_FLAG=1 ;;
-        P)
-            PROD_FLAG=1 ;;
-        p)
-            PY_FLAG=1 ;;
-        S)
-            SDK_FLAG=1 ;;
-        s)
-            SCHL_FLAG=1 ;;
-        \?)
-            usage
-            echoerr "Error: unknown option '$OPTARG'"
-            exit 1 ;;
+            exit 0            ;;
+        -j | --js)
+            FLAGS[js]=1     ;;
+        -P | --product)
+            FLAGS[prod]=1   ;;
+        -p | --python)
+            FLAGS[py]=1     ;;
+        -S | --sdk)
+            FLAGS[sdk]=1    ;;
+        -s | --school)
+            FLAGS[schl]=1   ;;
+        --)
+            shift
+            break             ;;
     esac
+    shift
 done
 
 # Check internet connection
@@ -140,7 +153,7 @@ echo ""
 
 # Ask to update the system
 # TESTS: ubuntu - OK, wsl - OK
-echo -n "Update packages? [y/n]: "
+echo -n "Update system? [y/n]: "
 read ans
 if [[ "$ans" =~ ^[yY]$ ]]; then
 
@@ -158,7 +171,6 @@ if [[ "$ans" =~ ^[yY]$ ]]; then
 fi
 echo ""
 
-
 echo "ESSENTIALS"
 install_from_array ${ESSENTIALS[@]}
 echo ""
@@ -169,7 +181,7 @@ echo ""
 
 # '-c' Install C programs and packages
 # TESTS: ubuntu - OK, wsl - OK
-if [[ $C_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
+if [[ ${FLAGS[c]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
 
     echo "C PACKAGES"
     printf "%-60s" "  Checking that 'build-essential' package is insalled."
@@ -202,21 +214,21 @@ fi
 
 # '-d' - Download dotfiles
 # TESTS: ubuntu - OK, wsl - OK
-if [[ $DOT_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
+if [[ ${FLAGS[dot]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
     echo "DOTFILES"
     echo "  Downloading 'dotfiles' repository from git..."
-    git clone $DOTFILES_GIT_REPO > /dev/null 2>&1
+    git clone ${GIT_REPOS[dot]} > /dev/null 2>&1
 
     echo "  Setting up 'dotfiles'..."
     shopt -s dotglob
-    find dotfiles -maxdepth 1 -type f -exec mv -i {} $HOME \;
+    find dotfiles/public -maxdepth 1 -type f -exec mv -i {} $HOME \;
     rm -rf dotfiles
     echo ""
 fi
 
 # '-f' - Install fun programs
 # TESTS: ubuntu - OK, wsl - OK
-if [[ $FUN_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
+if [[ ${FLAGS[fun]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
     echo "FUN PROGRAMS"
     install_from_array ${FUN_PROGS[@]}
     echo ""
@@ -224,7 +236,7 @@ fi
 
 # '-j' - Install JavaScript packages
 # TESTS: ubuntu - OK, wsl - OK
-if [[ $JS_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
+if [[ ${FLAGS[js]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
     echo "JAVA SCRIPT PACKAGES"
     install_from_dict JS_PACKAGES
     echo ""
@@ -232,7 +244,7 @@ fi
 
 # '-P' - Install programs for productivity
 # TESTS: ubuntu - OK, wsl - OK
-if [[ $PROD_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
+if [[ ${FLAGS[prod]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
     echo "PRODUCTIVITY PROGRAMS"
     install_from_dict PROD_PROGS
     echo ""
@@ -240,7 +252,7 @@ fi
 
 # '-p' - Install python packages - TESTED on wsl
 # TESTS: ubuntu - OK, wsl - BUG on ipython
-if [[ $PY_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
+if [[ ${FLAGS[py]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
 
     echo "PYTHON PACKAGES"
     install_from_dict PY_PACKAGES
@@ -250,7 +262,7 @@ if [[ $PY_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
     for package in ${PIP_PACKAGES[@]}; do
         printf "%-60s" "  Checking that '$package' is installed."
         if ! pip3 show $package > /dev/null; then
-            echo "Installing '$package'..."
+            echo -e "\nInstalling '$package'..."
             pip3 install $package > /dev/null
         else
             printf "%10s\n" "[ OK ]"
@@ -270,11 +282,11 @@ fi
 
 # '-S' - Download and set up scripts from 'sdk' repository
 # TESTS: ubuntu - OK, wsl - OK
-if [[ $SDK_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
+if [[ ${FLAGS[sdk]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
 
     echo "SDK"
     echo "  Downloading 'sdk' repository from git..."
-    git clone $SDK_GIT_REPO > /dev/null 2>&1
+    git clone ${GIT_REPOS[sdk]} > /dev/null 2>&1
 
     echo "  Setting up 'sdk' scripts..."
 
@@ -294,13 +306,11 @@ fi
 
 # '-s' - Set up Scripts from 'school' repository
 # TESTS: ubuntu - OK, wsl - OK
-if [[ $SCHL_FLAG -eq 1 || $ALL_FLAG -eq 1 ]]; then
+if [[ ${FLAGS[schl]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
 
     echo "SCHOOL"
     echo "  Setting up 'school' scripts..."
-
-    # 'lesson' script
-    sudo cp -i lesson /usr/local/bin
+    sudo cp -i lesson /usr/local/bin  # 'lesson' script
     echo ""
 
 fi
