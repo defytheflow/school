@@ -291,10 +291,13 @@ if [[ ${FLAGS[sdk]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
     echo "  Setting up 'sdk' scripts..."
 
     # 'new' script
-    if [[ -d $HOME/.templates ]]; then
-        rm -rf $HOME/.templates
+    if [[ ! -d /usr/share/templates ]]; then
+        sudo mkdir /usr/share/templates
+    elif ! isempty /usr/share/templates; then
+        sudo rm /usr/share/templates/*
     fi
-    cp -r sdk/templates $HOME/.templates
+
+    sudo cp sdk/templates/* /usr/share/templates/
     sudo cp -i sdk/new   /usr/local/bin
 
     # 'clean' script
