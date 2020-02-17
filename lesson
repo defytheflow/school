@@ -272,8 +272,8 @@ elif [[ ${FLAGS[end]} -eq 1 ]]; then
 
                 ## CHECH THAT IS NOT EMPTY
 
-                if [[ ! -s $file ]]; then
-                    sttyle_errors=$(( style_errors + 1 ))
+                if [[ ! -s $1/$dir/$file ]]; then
+                    style_errors=$(( style_errors + 1 ))
                     echoerr "Style Error: '$1/$dir/$file' is empty."
                     echoerr "Fix: remove it."
                 fi
@@ -375,13 +375,15 @@ elif [[ ${FLAGS[end]} -eq 1 ]]; then
     echo ""
     echoc " 3. Programs written: $programs_written"
     echo ""
-    printf "%0.s-" $(seq 1 $columns)
 
-    # If no files were created, remove the lesson dir as well
+    # remove lesson dir if nothing has been created
     if isempty $1; then
         rmdir $1
+    else
+        tree $1
     fi
 
+    printf "%0.s-" $(seq 1 $columns)
 fi
 
 exit 0
