@@ -27,6 +27,8 @@ usage()
     echo "  Artyom Daniov"
 }
 
+## GLOBAL DICTIONARIES
+
 declare -A FLAGS=(
     [force]=0  # -f, --force
     [make]=""  # -m, --make
@@ -37,6 +39,8 @@ declare -A COMMANDS=(
     [end]=0    # end
 )
 
+## FUNCTION DEFINITIONS
+
 # Returns 0 if $1 is a script command
 is_command()
 {
@@ -46,6 +50,16 @@ is_command()
         fi
     done
     return 1
+}
+
+# Returns 0 if $1 has a '.something' at the end
+has_ext()
+{
+    if [[ "$1" =~ ^.+\..+$ ]]; then
+        return 0
+    else
+        return 1
+    fi
 }
 
 ## GLOBAL VARIABLES
@@ -199,7 +213,7 @@ if [[ ${FLAGS[begin]} -eq 1 ]]; then
 
         # In each $dir create a Makefile
         for dir in ${LESSON_DIRECTORIES[@]}; do
-            new --make=$MAKEFILE_FLAG $1/$dir/$MAKEFILE
+            new --make=${FLAGS[make]} $1/$dir/$MAKEFILE
         done
     fi
 
@@ -234,20 +248,54 @@ elif [[ ${FLAGS[end]} -eq 1 ]]; then
         exit 1
     fi
 
-    ## REMOVE EMPTY DIRECTORIES
+    ## FOR EACH DIRECTORY
+
+    style_errors=0
 
     for dir in ${LESSON_DIRECTORIES[@]}; do
 
-        # If $dir exists and $dir is empty
-        if [[ -d $1/$dir ]] && isempty $1/$dir; then
-            rm -r $1/$dir
+        # if $dir exists
+        if [[ -d $1/$dir ]]; then
 
-        # If $dir only has a $MAKEFILE inside
-        elif [[ -f $1/$dir/$MAKEFILE && $(filenum $1/$dir) -eq 1 ]]; then
-            rm -r $1/$dir
+            ## FOR EACH FILE INSIDE DIRECTORY
+
+            for file in $(ls $1/$dir); do
+
+                ## CHECK THAT HAS EXTENSION
+
+                # if file doesn't have an extension
+                if ! has_ext $file && [[ $file != $MAKEFILE ]]; then
+                    style_errors=$(( style_errors + 1 ))
+                    echoerr "Style Error: '$1/$dir/$file' doesn't have an extension."
+                    echoerr "Fix: add an extension."
+                fi
+
+                ## CHECH THAT IS NOT EMPTY
+
+                if [[ ! -s $file ]]; then
+                    sttyle_errors=$(( style_errors + 1 ))
+                    echoerr "Style Error: '$1/$dir/$file' is empty."
+                    echoerr "Fix: remove it."
+                fi
+
+            done
+
+            ## REMOVE EMPTY DIRECTORIES
+
+            # If $dir is empty
+            if  isempty $1/$dir; then
+                rm -r $1/$dir
+            # If $dir only has a $MAKEFILE inside
+            elif [[ -f $1/$dir/$MAKEFILE && $(filenum $1/$dir) -eq 1 ]]; then
+                rm -r $1/$dir
+            fi
+
         fi
-
     done
+
+    if [[ $style_errors -gt 0 ]]; then
+        exit 1
+    fi
 
     ## TIME STATS
 
