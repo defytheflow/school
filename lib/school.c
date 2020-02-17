@@ -37,3 +37,13 @@ void print_double_array(const double* array, size_t n)
         }
         printf("\b\b]\n");
 }
+
+
+void print_generic_array(void* source, int n, int size, void (*print_func)(void *))
+{
+        printf("[");
+        for (int i = 0; i < n; ++i) {
+                print_func((char*)source + i * size);
+        }
+        printf("\b\b]\n");
+}

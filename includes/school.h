@@ -20,4 +20,6 @@ void print_float_array(const float* array, size_t n);
 
 void print_double_array(const double* array, size_t n);
 
+void print_generic_array(void* source, int n, int size, void (*print_func)(void *));
+
 #endif  // SCHOOL_H
