@@ -143,19 +143,31 @@ fi
 ## SET COMMAND
 
 # Check the <command> argument is valid
-case $1 in
+
+command=$1
+shift
+
+case $command in
     begin | start)
-        FLAGS[begin]=1
-        shift ;;
+        if [[ $# -lt 1 ]]; then
+            echoerr "Error: '$command' missing <lesson_num> argument"
+            echoerr $HELP_MESSAGE
+            exit 1
+        fi
+        FLAGS[begin]=1 ;;
     begin-next | start-next)
         FLAGS[begin-next]=1
-        shift ;;
+        ;;
     end | finish)
-        FLAGS[end]=1
-        shift ;;
+        if [[ $# -lt 1 ]]; then
+            echoerr "Error: '$command' missing <lesson_num> argument"
+            echoerr $HELP_MESSAGE
+            exit 1
+        fi
+        FLAGS[end]=1 ;;
     end-last | finish-last)
         FLAGS[end-last]=1
-        shift ;;
+        ;;
     help)
         usage
         exit 0 ;;
