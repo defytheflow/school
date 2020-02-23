@@ -62,12 +62,12 @@ COMPLEMENTS=(howdoi)
 install_from_array() {
 
     local progs=($@)
-    for prog in ${progs[@]}; do
+    for prog in "${progs[@]}"; do
         printf "%-60s" "  Checking that'$prog' is installed."
         # echo -n "  Checking that '$prog' is installed."
-        if [[ ! -x $(command -v $prog) ]]; then
+        if [[ ! -x $(command -v "$prog") ]]; then
             echo "  Installing '$prog'..."
-            yes | sudo apt-get install $prog
+            yes | sudo apt-get install "$prog"
             clear
         else
             printf "%10s\n" "[ OK ]"
@@ -81,9 +81,9 @@ install_from_dict() {
     local -n progs=$1
     for prog in "${!progs[@]}"; do
         printf "%-60s" "  Checking that'$prog' is installed."
-        if [[ ! -x $(command -v $prog) ]]; then
+        if [[ ! -x $(command -v "$prog") ]]; then
             echo "  Installing '$prog'..."
-            yes | sudo apt-get install ${progs[$prog]}
+            yes | sudo apt-get install "${progs[$prog]}"
             clear
         else
             printf "%10s\n" "[ OK ]"
@@ -144,8 +144,7 @@ done
 
 # Check internet connection
 echo "Checking your internet connection."
-wget -q --spider https://google.com
-if [[ $? -ne 0 ]]; then
+if ! wget -q --spider https://google.com; then
     echoerr "Error: no internet connection"
     exit 1
 fi
@@ -154,7 +153,7 @@ echo ""
 # Ask to update the system
 # TESTS: ubuntu - OK, wsl - OK
 echo -n "Update system? [y/n]: "
-read ans
+read -rep ans
 if [[ "$ans" =~ ^[yY]$ ]]; then
 
     echo "Updating packages list..."
@@ -172,11 +171,11 @@ fi
 echo ""
 
 echo "ESSENTIALS"
-install_from_array ${ESSENTIALS[@]}
+install_from_array "${ESSENTIALS[@]}"
 echo ""
 
 echo "COMPLEMENTS"
-install_from_array ${COMPLEMENTS[@]}
+install_from_array "${COMPLEMENTS[@]}"
 echo ""
 
 # '-c' Install C programs and packages
@@ -217,11 +216,11 @@ fi
 if [[ ${FLAGS[dot]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
     echo "DOTFILES"
     echo "  Downloading 'dotfiles' repository from git..."
-    git clone ${GIT_REPOS[dot]} > /dev/null 2>&1
+    git clone "${GIT_REPOS[dot]}" > /dev/null 2>&1
 
     echo "  Setting up 'dotfiles'..."
     shopt -s dotglob
-    find dotfiles/public -maxdepth 1 -type f -exec mv -i {} $HOME \;
+    find dotfiles/public -maxdepth 1 -type f -exec mv -i {} "$HOME" \;
     rm -rf dotfiles
     echo ""
 fi
@@ -230,7 +229,7 @@ fi
 # TESTS: ubuntu - OK, wsl - OK
 if [[ ${FLAGS[fun]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
     echo "FUN PROGRAMS"
-    install_from_array ${FUN_PROGS[@]}
+    install_from_array "${FUN_PROGS[@]}"
     echo ""
 fi
 
@@ -259,11 +258,11 @@ if [[ ${FLAGS[py]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
     echo ""
 
     echo "PIP PACKAGES"
-    for package in ${PIP_PACKAGES[@]}; do
+    for package in "${PIP_PACKAGES[@]}"; do
         printf "%-60s" "  Checking that '$package' is installed."
-        if ! pip3 show $package > /dev/null; then
+        if ! pip3 show "$package" > /dev/null; then
             echo -e "\nInstalling '$package'..."
-            pip3 install $package > /dev/null
+            pip3 install "$package" > /dev/null
         else
             printf "%10s\n" "[ OK ]"
         fi
@@ -272,10 +271,11 @@ if [[ ${FLAGS[py]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
 
     echo "  Setting up Python 'school' library..."
     if [[ ! -d $HOME/.lib ]]; then
-        mkdir $HOME/.lib
+        mkdir "$HOME/.lib"
     fi
-    cp -i lib/school.py $HOME/.lib
-    cp -i lib/utils.py $HOME/.lib
+    cp -i lib/school.py "$HOME/.lib"
+    cp -i lib/new_school.py "$HOME/.lib"
+    cp -i lib/utils.py "$HOME/.lib"
     echo ""
 
 fi
@@ -286,7 +286,7 @@ if [[ ${FLAGS[sdk]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
 
     echo "SDK"
     echo "  Downloading 'sdk' repository from git..."
-    git clone ${GIT_REPOS[sdk]} > /dev/null 2>&1
+    git clone "${GIT_REPOS[sdk]}" > /dev/null 2>&1
 
     echo "  Setting up 'sdk' scripts..."
 

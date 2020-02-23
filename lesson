@@ -74,14 +74,7 @@ is_command()
 }
 
 # Returns 0 if $1 has a '.something' at the end
-has_ext()
-{
-    if [[ "$1" =~ ^.+\..+$ ]]; then
-        return 0
-    else
-        return 1
-    fi
-}
+has_ext() { return $( [[ "$1" =~ ^.+\..+$ ]] ); }
 
 ## PARSE OPTIONS
 
@@ -91,7 +84,7 @@ long_options="force,help,make:"
 options=$(getopt -o $short_options -l $long_options -- "$@")
 
 if [[ $? -ne 0 ]]; then
-    echoerr $HELP_MESSAGE
+    echoerr "$HELP_MESSAGE"
     exit 1
 fi
 
@@ -112,14 +105,14 @@ while true; do
             shift
             if [[ $1 == "c" || $1 == "cpp" ]]; then
                 FLAGS[make]=$1
-            elif is_command $1; then
+            elif is_command "$1"; then
                 echoerr "Error: '-m, --make' option requires an argument."
-                echoerr $HELP_MESSAGE
+                echoerr "$HELP_MESSAGE"
                 exit 1
             else
                 echoerr "Error: '$1' makefile is not supported."
                 echoerr "Supported makefiles: c, cpp"
-                echoerr $HELP_MESSAGE
+                echoerr "$HELP_MESSAGE"
                 exit 1
             fi
             ;;
@@ -136,7 +129,7 @@ done
 # Check the <command> is given
 if [[ $# -lt 1 ]]; then
     echoerr "Error: missing <command> argument"
-    echoerr $HELP_MESSAGE
+    echoerr "$HELP_MESSAGE"
     exit 1
 fi
 
@@ -151,7 +144,7 @@ case $command in
     begin | start)
         if [[ $# -lt 1 ]]; then
             echoerr "Error: '$command' missing <lesson_num> argument"
-            echoerr $HELP_MESSAGE
+            echoerr "$HELP_MESSAGE"
             exit 1
         fi
         FLAGS[begin]=1 ;;
@@ -161,7 +154,7 @@ case $command in
     end | finish)
         if [[ $# -lt 1 ]]; then
             echoerr "Error: '$command' missing <lesson_num> argument"
-            echoerr $HELP_MESSAGE
+            echoerr "$HELP_MESSAGE"
             exit 1
         fi
         FLAGS[end]=1 ;;
@@ -173,7 +166,7 @@ case $command in
         exit 0 ;;
     *)
         echoerr "Error: unknown command '$1'"
-        echoerr $HELP_MESSAGE
+        echoerr "$HELP_MESSAGE"
         exit 1 ;;
 esac
 
@@ -182,7 +175,7 @@ if [[ ! "$(pwd)" =~ .+/$LESSONS_DIR$ ]]; then
     if [[ ${FLAGS[force]} -ne 1 ]]; then
         echo "Not inside '$LESSONS_DIR' directory"
         echo "It may affect how I work"
-        read -p "Proceed? [y/n]: " ans
+        read -rep "Proceed? [y/n]: " ans
         [[ ! "$ans" =~ ^[yY]$ ]] && exit 0
     fi
 fi
@@ -211,7 +204,7 @@ shift
 ## VALIDATION
 
 # Check if <lesson_num> argument is a positive number
-if ! isuint $LESSON_NUM; then
+if [[ ! "$LESSON_NUM" =~ ^[0-9]+$ ]]; then
     echoerr "Error: <lesson_num> argument must be an integer"
     echoerr "Fix: Try 1..$MAX_LESSON_NUM"
     exit 1
@@ -221,7 +214,7 @@ fi
 if [[ ! "$LESSON_NUM" -le $MAX_LESSON_NUM ]]; then
     if [[ ${FLAGS[force]} -ne 1 ]]; then
         echo "$LESSON_NUM exceeds the MAX_LESSON_NUM"
-        read -p "Proceed? [y/n]: " ans
+        read -rep "Proceed? [y/n]: " ans
         [[ ! "$ans" =~ ^[yY]$ ]] && exit 0
     fi
 fi
@@ -241,8 +234,8 @@ if [[ ${FLAGS[begin]} -eq 1 ]]; then
 
     ## CREATE DIRECTORIES
 
-    for dir in ${LESSON_DIRECTORIES[@]}; do
-        mkdir -p $LESSON_NUM/$dir
+    for dir in "${LESSON_DIRECTORIES[@]}"; do
+        mkdir -p "$LESSON_NUM/$dir"
     done
 
     ## MAKEFILE
@@ -258,18 +251,18 @@ if [[ ${FLAGS[begin]} -eq 1 ]]; then
         fi
 
         # In each $dir create a Makefile
-        for dir in ${LESSON_DIRECTORIES[@]}; do
-            new --make=${FLAGS[make]} $LESSON_NUM/$dir/$MAKEFILE
+        for dir in "${LESSON_DIRECTORIES[@]}"; do
+            new --make=${FLAGS[make]} "$LESSON_NUM/$dir/$MAKEFILE"
         done
     fi
 
     # Create a time-stamp file
-    touch $LESSON_NUM/.lesson_start
+    touch "$LESSON_NUM/.lesson_start"
 
     ## BEGIN SCREEN
 
     columns=$(tput cols)
-    printf "%0.s-" $(seq 1 $columns)
+    printf "%0.s-" $(seq 1 "$columns")
     echo ""
     echo ""
     echoc "Welcome to Lesson #$LESSON_NUM, $(whoami)!"
@@ -282,7 +275,7 @@ if [[ ${FLAGS[begin]} -eq 1 ]]; then
     echo ""
     echoc " 3. Efficiently"
     echo ""
-    printf "%0.s-" $(seq 1 $columns)
+    printf "%0.s-" $(seq 1 "$columns")
 
 elif [[ ${FLAGS[end]} -eq 1 ]]; then
 
@@ -302,7 +295,7 @@ elif [[ ${FLAGS[end]} -eq 1 ]]; then
 
     ## FOR EACH DIRECTORY
 
-    for dir in ${LESSON_DIRECTORIES[@]}; do
+    for dir in "${LESSON_DIRECTORIES[@]}"; do
 
         full_dir="$LESSON_NUM/$dir"
 
@@ -311,14 +304,14 @@ elif [[ ${FLAGS[end]} -eq 1 ]]; then
 
             ## FOR EACH FILE INSIDE DIRECTORY
 
-            for file in $(ls $full_dir); do
+            for file in $(ls "$full_dir"); do
 
                 full_file="$LESSON_NUM/$dir/$file"
 
                 ## CHECK THAT FILE HAS EXTENSION
 
                 # if file doesn't have an extension
-                if ! has_ext $file && [[ $file != $MAKEFILE ]]; then
+                if ! has_ext "$file" && [[ $file != "$MAKEFILE" ]]; then
                     style_errors=$(( style_errors + 1 ))
                     echoerr "Style Error: '$full_file' doesn't have an extension."
                     echoerr "Fix: add an extension."
@@ -335,8 +328,8 @@ elif [[ ${FLAGS[end]} -eq 1 ]]; then
                 ## IF FILE IS AN EXERCISE OR A PROGRAM
                 case $dir in
                     Exercises | Programs)
-                    if [[ "$(file $full_file)" =~ "C source" ||
-                          "$(file $full_file)" =~ "Python script" ]]; then
+                    if [[ "$(file "$full_file")" =~ "C source" ||
+                          "$(file "$full_file")" =~ "Python script" ]]; then
                         case $dir in
                             Exercises)
                             exercises_completed=$(( exercises_completed + 1 )) ;;
@@ -351,9 +344,9 @@ elif [[ ${FLAGS[end]} -eq 1 ]]; then
             ## REMOVE EMPTY DIRECTORIES
 
             # If directory is empty or only has a $MAKEFILE inside
-            if isempty $full_dir ||
-               [[ -f $full_dir/$MAKEFILE && $(filenum $full_dir) -eq 1 ]]; then
-                rm -r $full_dir
+            if isempty "$full_dir" ||
+               [[ -f $full_dir/$MAKEFILE && $(filenum "$full_dir") -eq 1 ]]; then
+                rm -r "$full_dir"
             fi
 
         fi
@@ -366,13 +359,13 @@ elif [[ ${FLAGS[end]} -eq 1 ]]; then
 
     if [[ -f $LESSON_NUM/.lesson_start ]]; then
 
-        duration=$(( $(date +%s) - $(stat -c "%Y" $LESSON_NUM/.lesson_start) ))
+        duration=$(( $(date +%s) - $(stat -c "%Y" "$LESSON_NUM/.lesson_start") ))
         hours=$(( duration / 3600 ))
         minutes=$(( duration / 60 - hours * 60))
         seconds=$(( duration % 60 ))
 
         # Delete a time-stamp file
-        rm $LESSON_NUM/.lesson_start
+        rm "$LESSON_NUM/.lesson_start"
 
     fi
 
@@ -388,7 +381,7 @@ elif [[ ${FLAGS[end]} -eq 1 ]]; then
 
         # Tackle 'bad' commit messages
         while true; do
-            read -ep "Enter commit message: " message
+            read -rep "Enter commit message: " message
 
             if [[ ${#message} -lt $MIN_COMMIT_MESSAGE_LENGTH ]]; then
                 echoerr "Error: commit message must be at least" \
@@ -405,8 +398,7 @@ elif [[ ${FLAGS[end]} -eq 1 ]]; then
 
         # Tackle wrong login/password issues
         while true; do
-            git push
-            [[ $? -eq 0 ]] && break
+            git push && break
             echo ""
         done
 
@@ -415,7 +407,7 @@ elif [[ ${FLAGS[end]} -eq 1 ]]; then
     ## END SCREEN
 
     columns=$(tput cols)
-    printf "%0.s-" $(seq 1 $columns)
+    printf "%0.s-" $(seq 1 "$columns")
     echo ""
     echoc "End of lesson #$LESSON_NUM. Goodbye, $(whoami)!"
     echo ""
@@ -429,13 +421,13 @@ elif [[ ${FLAGS[end]} -eq 1 ]]; then
     echo ""
 
     # remove lesson dir if nothing has been created
-    if isempty $LESSON_NUM; then
-        rmdir $LESSON_NUM
+    if isempty "$LESSON_NUM"; then
+        rmdir "$LESSON_NUM"
     else
-        tree $LESSON_NUM
+        tree "$LESSON_NUM"
     fi
 
-    printf "%0.s-" $(seq 1 $columns)
+    printf "%0.s-" $(seq 1 "$columns")
 fi
 
 exit 0
