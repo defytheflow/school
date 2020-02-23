@@ -152,8 +152,7 @@ echo ""
 
 # Ask to update the system
 # TESTS: ubuntu - OK, wsl - OK
-echo -n "Update system? [y/n]: "
-read -rep ans
+read -rep "Update system? [y/n]: " ans
 if [[ "$ans" =~ ^[yY]$ ]]; then
 
     echo "Updating packages list..."
@@ -195,6 +194,7 @@ if [[ ${FLAGS[c]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
     echo "  Setting up C 'school' library..."
     # C - library
     sudo cp -i includes/school.h /usr/local/include
+    sudo cp -i includes/std_lib.h /usr/local/include
 
     # Compile school lib
     gcc lib/school.c -c -fPIC > /dev/null
