@@ -1,4 +1,4 @@
-#include "school.h"
+#include "array.h"
 
 #include <stdio.h>
 

@@ -193,19 +193,18 @@ if [[ ${FLAGS[c]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
 
     echo "  Setting up C 'school' library..."
     # C - library
-    sudo cp -i includes/school.h /usr/local/include
-    sudo cp -i includes/std_lib.h /usr/local/include
+    sudo cp -i includes/c/*.h /usr/local/include
+    sudo cp -i includes/c++/*.h /usr/local/include
 
     # Compile school lib
-    gcc lib/school.c -c -fPIC > /dev/null
-    gcc school.o -shared -o libschool.so
-    rm school.o
+    gcc lib/c/*.c -c -fPIC > /dev/null
+    gcc *.o -shared -o libschool.so
+    rm *.o
 
     # Set up C school lib
     sudo mv -i libschool.so /usr/local/lib
-    if [[ -f libschool.so ]]; then
-        rm libschool.so
-    fi
+    [[ -f libschool.so ]] && rm libschool.so
+
     # So that library changes took place
     sudo ldconfig
     echo ""
@@ -273,9 +272,7 @@ if [[ ${FLAGS[py]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
     if [[ ! -d $HOME/.lib ]]; then
         mkdir "$HOME/.lib"
     fi
-    cp -i lib/school.py "$HOME/.lib"
-    cp -i lib/new_school.py "$HOME/.lib"
-    cp -i lib/utils.py "$HOME/.lib"
+    cp -i lib/python/*.py "$HOME/.lib"
     echo ""
 
 fi
