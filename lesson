@@ -2,73 +2,102 @@
 
 usage()
 {
-    echo -e "Generates a default directory structure for a lesson.\n"
-    echo "Usage:"
+    echo -e "Creates an environment for a coding lesson.\n"
+
+    echo    "Usage:"
     echo -e "  lesson [options] <command>\n"
-    echo "Arguments:"
-    echo "  command                      name of the command"
-    echo "  lesson_num                   the lesson number"
-    echo ""
-    echo "Options:"
-    echo "  -f, --force                  disable warnings"
-    echo "  -h, --help                   displays a usage message"
-    echo "  -m <lang>, --make <lang>     creates a makefile inside of each directory"
-    echo ""
-    echo "Commands:"
-    echo "  begin, start <lesson_num>    creates the directories for the lesson."
-    echo "  begin-next, start-next       same as begin, but automatically decides"
-    echo "                               <lesson_num>."
-    echo "  end, finish  <lesson_num>    removes unused directories for the lesson."
-    echo "  end-last, finish-last        same as end, but automatically decides"
-    echo "                               <lesson_num>."
-    echo "  help                         displays a help message."
-    echo ""
-    echo "Examples:"
-    echo "  lesson begin 1"
-    echo "  lesson begin-next"
-    echo "  lesson end 1"
-    echo "  lesson end-last"
-    echo ""
-    echo "Author:"
+
+    echo    "Arguments:"
+    echo    "  command                      name of the command."
+    echo -e "  lesson_num                   the lesson number.\n"
+
+    echo    "Options:"
+    echo    "  -f, --force                  disable warnings."
+    echo -e "  -h, --help                   display this message.\n"
+
+    echo    "  -m <lang>, --make <lang>     create a makefile for a particular"
+    echo -e "                               language inside of each directory.\n"
+
+    echo    "Commands:"
+    echo    "  start <lesson_num>           creates the directories and files"
+    echo -e "                               for the lesson.\n"
+
+    echo    "  start-next                   same as start, but automatically"
+    echo -e "                               calculates <lesson_num>.\n"
+
+    echo    "  end <lesson_num>             removes unused directories, displays"
+    echo -e "                               stats and pushes to git.\n"
+
+    echo    "  end-last                     same as end, but automatically"
+    echo -e "                               calculates <lesson_num>.\n"
+
+    echo -e "  help                         displays a help message.\n"
+
+    echo    "Examples:"
+    echo    "  lesson start 1"
+    echo    "  lesson start-next"
+    echo    "  lesson end 1"
+    echo -e "  lesson end-last\n"
+
+    echo    "Author:"
     echo -e "  Artyom Daniov\n"
 }
 
-## GLOBAL VARIABLES
+# ------------------------------------------------------------------- #
+#                          Global variables                           #
+# ------------------------------------------------------------------- #
+
+SHORT_OPTS="fhm:"
+LONG_OPTS="force,help,make:"
+HELP_MSG="Try: 'lesson -h | --help' for more information"
+MAKEFILE_NAME="Makefile"
+TIME_STAMP=".lesson_start"
+
+LESSONS_DIR="Lessons"
+LESSON_DIRS=(examples exercises theory whiteboard programs
+                    homework todo ideas modules)
 
 declare -A FLAGS=(
-
     [force]=0  # -f, --force
     [make]=""  # -m, --make
-
 )
 
 declare -A COMMANDS=(
-
-    [begin]=0  # begin
-    [begin-next]=0
-    [end]=0    # end
+    [start]=0       # lesson start <lesson_num>
+    [start-next]=0
+    [end]=0         # lesson end <lesson_num>
     [end-next]=0
-
 )
 
-MAX_LESSON_NUM=100
-LESSONS_DIR="Lessons"
-LESSON_DIRECTORIES=(Examples Exercises Theory Whiteboard Programs
-                    Homework Todo Ideas Modules Classes)
+# ------------------------------------------------------------------- #
+#                     Global variables - start                        #
+# ------------------------------------------------------------------- #
 
-HELP_MESSAGE="Try: 'lesson -h | --help' for more information"
-MAKEFILE="Makefile"
+MAX_LESSON_NUM=100
+
+# ------------------------------------------------------------------- #
+#                       Global variables - end                        #
+# ------------------------------------------------------------------- #
+
+STYLE_ERRORS=0
+EXERCISES_COMPLETED=0
+PROGRAMS_WRITTEN=0
+
+HOURS_=0
+MINUTES_=0
+SECONDS_=0
+
 MIN_COMMIT_MESSAGE_LENGTH=20
 
-## FUNCTION DEFINITIONS
+# ------------------------------------------------------------------- #
+#                           Functions                                 #
+# ------------------------------------------------------------------- #
 
 # Returns 0 if $1 is a script command
 is_command()
 {
     for com in "${!COMMANDS[@]}"; do
-        if [[ "$com" == "$1" ]]; then
-            return 0
-        fi
+        [[ "$com" == "$1" ]] && return 0
     done
     return 1
 }
@@ -76,104 +105,265 @@ is_command()
 # Returns 0 if $1 has a '.something' at the end
 has_ext() { return $( [[ "$1" =~ ^.+\..+$ ]] ); }
 
-## PARSE OPTIONS
+# ------------------------------------------------------------------- #
+#                           Functions - start                         #
+# ------------------------------------------------------------------- #
 
-short_options="fhm:"
-long_options="force,help,make:"
+# Creates each of LESSON_DIRS directories.
+create_lesson_directories()
+{
+    local lesson_num=$1
 
-options=$(getopt -o $short_options -l $long_options -- "$@")
+    for dir in "${LESSON_DIRS[@]}"; do
+        mkdir -p "$lesson_num/$dir"
+    done
+}
+
+# In eacn of the LESSON_DIRS creates a Makefile
+create_makefiles()
+{
+    local lesson_num=$1
+
+    for dir in "${LESSON_DIRS[@]}"; do
+        new --make=${FLAGS[make]}
+        mv "$MAKEFILE_NAME" "$lesson_num/$dir/$MAKEFILE_NAME"
+    done
+}
+
+print_start_screen()
+{
+    local columns=$(tput cols)
+
+    printf "%0.s-" $(seq 1 "$columns")  # upper border
+    echo -e "\n"
+    echoc "Welcome to Lesson #$LESSON_NUM, $(whoami)!\n"
+    echoc "Remember to express your ideas:\n"
+    echoc " 1. Correctly\n"
+    echoc " 2. Simply\n"
+    echoc " 3. Efficiently\n"
+    printf "%0.s-" $(seq 1 "$columns")  # lower border
+}
+
+# ------------------------------------------------------------------- #
+#                           Functions - end                           #
+# ------------------------------------------------------------------- #
+
+# Increases STYLE_ERRORS and prints an error message
+# if $1 file doesn't have an extension.
+check_extension()
+{
+    local file=$1
+
+    if ! has_ext "$file" && [[ $file != "$MAKEFILE_NAME" ]]; then
+        STYLE_ERRORS=$(( STYLE_ERRORS + 1 ))
+        echo "Style Error: '$file' doesn't have an extension." >&2
+        echo "Fix: add an extension." >&2
+    fi
+}
+
+# Increases STYLE_ERRORS and prints an error message if $1 file is empty.
+check_emptiness()
+{
+    local file=$1
+    if [[ ! -s $file ]]; then
+        STYLE_ERRORS=$(( STYLE_ERRORS + 1 ))
+        echo "Style Error: '$file' is empty." >&2
+        echo "Fix: remove it." >&2
+    fi
+}
+
+# If $1 dir is empty or only has a makefile -> remove it.
+remove_empty_directory()
+{
+    local dir=$1
+
+    if isempty "$dir" ||
+        [[ -f $dir/$MAKEFILE_NAME && $(filenum "$dir") -eq 1 ]]; then
+        rm -r "$dir"
+    fi
+}
+
+# Increases EXERCISES_COMPLETED | PROGRAMS_WRITTEN depending on $1 mode
+# if $2 file type is c, c++ or python
+collect_file_stats()
+{
+    local mode=$1  # exercises | programs
+    local file=$2
+    local types=("C source" "C++ source" "Python script")
+
+    for type_ in "${types[@]}"; do
+        if [[ "$(file "$file")" =~ "$type_" ]]; then
+            case $mode in
+                exercises)
+                    EXERCISES_COMPLETED=$(( EXERCISES_COMPLETED + 1 )) ;;
+                programs)
+                    PROGRAMS_WRITTEN=$(( PROGRAMS_WRITTEN + 1 ))       ;;
+            esac
+        fi
+    done
+}
+
+collect_time_stats()
+{
+    local lesson_num=$1
+
+    if [[ -f $lesson_num/$TIME_STAMP ]]; then
+        local duration=$(( $(date +%s) - $(stat -c "%Y" "$lesson_num/$TIME_STAMP") ))
+        HOURS_=$(( duration / 3600 ))
+        MINUTES_=$(( duration / 60 - HOURS_ * 60))
+        SECONDS_=$(( duration % 60 ))
+        rm "$lesson_num/$TIME_STAMP"  # Delete a time-stamp file
+    fi
+}
+
+# Tackle wrong login/password issues
+git_push()
+{
+    while true; do
+        git push && break
+        echo ""
+    done
+}
+
+# Tackle 'bad' commit messages
+git_commit()
+{
+    while true; do
+        read -rep "Enter commit message: " message
+
+        if [[ ${#message} -lt $MIN_COMMIT_MESSAGE_LENGTH ]]; then
+            echo "Error: commit message must be at least" \
+                 "$MIN_COMMIT_MESSAGE_LENGTH characters long" >&2
+            continue
+        fi
+
+        break
+    done
+
+    echo ""
+    git commit -m "$message"
+    echo ""
+}
+
+print_end_screen()
+{
+    local columns=$(tput cols)
+
+    printf "%0.s-" $(seq 1 "$columns")
+    echo -e "\n"
+    echoc "End of lesson #$LESSON_NUM. Goodbye, $(whoami)!\n"
+    echoc "Stats:\n"
+    echoc " 1. Lesson took $HOURS_:$MINUTES_:$SECONDS_\n"
+    echoc " 2. Exercises completed: $EXERCISES_COMPLETED\n"
+    echoc " 3. Programs written: $PROGRAMS_WRITTEN\n"
+    printf "%0.s-" $(seq 1 "$columns")
+}
+
+# ------------------------------------------------------------------- #
+#                           Parse options                             #
+# ------------------------------------------------------------------- #
+
+ARGV=$(getopt -o $SHORT_OPTS -l $LONG_OPTS -- "$@")
 
 if [[ $? -ne 0 ]]; then
-    echoerr "$HELP_MESSAGE"
+    echo "$HELP_MSG" >&2
     exit 1
 fi
 
-eval set -- "$options"  # sets $options as script arguments
+eval set -- "$ARGV"
 
-## SET OPTIONS
+# ------------------------------------------------------------------- #
+#                           Toggle options                            #
+# ------------------------------------------------------------------- #
 
 while true; do
     case $1 in
         -f | --force)
-            FLAGS[force]=1
-            ;;
+            FLAGS[force]=1    ;;
         -h | --help)
             usage
-            exit 0
-            ;;
-        -m | --make)
+            exit 0            ;;
+        -m | --make)  # BAD !!!
             shift
             if [[ $1 == "c" || $1 == "cpp" ]]; then
                 FLAGS[make]=$1
             elif is_command "$1"; then
-                echoerr "Error: '-m, --make' option requires an argument."
-                echoerr "$HELP_MESSAGE"
+                echo "Error: '-m, --make' option requires an argument." >&2
+                echo "$HELP_MSG" >&2
                 exit 1
             else
-                echoerr "Error: '$1' makefile is not supported."
-                echoerr "Supported makefiles: c, cpp"
-                echoerr "$HELP_MESSAGE"
+                echo "Error: '$1' makefile is not supported." >&2
+                echo "Supported makefiles: c, cpp" >&2
+                echo "$HELP_MSG" >&2
                 exit 1
             fi
-            ;;
+                            ;;
         --)
             shift
-            break
-            ;;
+            break           ;;
     esac
     shift
 done
 
-## VALIDATION
+# ------------------------------------------------------------------- #
+#                           Validation                                #
+# ------------------------------------------------------------------- #
 
 # Check the <command> is given
-if [[ $# -lt 1 ]]; then
-    echoerr "Error: missing <command> argument"
-    echoerr "$HELP_MESSAGE"
+if [[ $# -eq 0 ]]; then
+    echo "Error: missing <command> argument" >&2
+    echo "$HELP_MSG" >&2
     exit 1
 fi
 
-## SET COMMAND
+# ------------------------------------------------------------------- #
+#                         Toggle command                              #
+# ------------------------------------------------------------------- #
 
-# Check the <command> argument is valid
+COMMAND=$1; shift
 
-command=$1
-shift
+case $COMMAND in
 
-case $command in
-    begin | start)
-        if [[ $# -lt 1 ]]; then
-            echoerr "Error: '$command' missing <lesson_num> argument"
-            echoerr "$HELP_MESSAGE"
+    start)
+        if [[ $# -eq 0 ]]; then
+            echo "Error: '$COMMAND' missing <lesson_num> argument" >&2
+            echo "$HELP_MSG" >&2
             exit 1
         fi
-        FLAGS[begin]=1 ;;
-    begin-next | start-next)
-        FLAGS[begin-next]=1
-        ;;
-    end | finish)
-        if [[ $# -lt 1 ]]; then
-            echoerr "Error: '$command' missing <lesson_num> argument"
-            echoerr "$HELP_MESSAGE"
+        FLAGS[start]=1           ;;
+
+    start-next | start-next)
+        FLAGS[start-next]=1      ;;
+
+    end)
+        if [[ $# -eq 0 ]]; then
+            echo "Error: '$command' missing <lesson_num> argument" >&2
+            echo "$HELP_MSG" >&2
             exit 1
         fi
-        FLAGS[end]=1 ;;
+        FLAGS[end]=1             ;;
+
     end-last | finish-last)
-        FLAGS[end-last]=1
-        ;;
+        FLAGS[end-last]=1        ;;
+
     help)
         usage
-        exit 0 ;;
+        exit 0                   ;;
+
     *)
-        echoerr "Error: unknown command '$1'"
-        echoerr "$HELP_MESSAGE"
-        exit 1 ;;
+        echo "Error: unknown command '$1'" >&2
+        echo "$HELP_MSG" >&2
+        exit 1                   ;;
 esac
+
+# ------------------------------------------------------------------- #
+#                           Validation                                #
+# ------------------------------------------------------------------- #
 
 # Check if inside of LESSONS_DIR directory
 if [[ ! "$(pwd)" =~ .+/$LESSONS_DIR$ ]]; then
     if [[ ${FLAGS[force]} -ne 1 ]]; then
-        echo "Not inside '$LESSONS_DIR' directory"
+        echo "Warning: Not inside '$LESSONS_DIR' directory"
         echo "It may affect how I work"
         read -rep "Proceed? [y/n]: " ans
         [[ ! "$ans" =~ ^[yY]$ ]] && exit 0
@@ -182,12 +372,12 @@ fi
 
 ## SET LESSON_NUM
 
-if [[ ${FLAGS[begin-next]} -eq 1 ]]; then
+if [[ ${FLAGS[start-next]} -eq 1 ]]; then
 
     # find the largest lesson and add + 1
     LESSON_NUM=$(ls | grep -E '[0-9]+' | sort -n | tail -1)
     LESSON_NUM=$(( LESSON_NUM + 1 ))
-    FLAGS[begin]=1
+    FLAGS[start]=1
 
 elif [[ ${FLAGS[end-last]} -eq 1 ]]; then
     # find the largest lesson
@@ -201,233 +391,129 @@ fi
 
 shift
 
-## VALIDATION
+# ------------------------------------------------------------------- #
+#                           Validation                                #
+# ------------------------------------------------------------------- #
 
 # Check if <lesson_num> argument is a positive number
 if [[ ! "$LESSON_NUM" =~ ^[0-9]+$ ]]; then
-    echoerr "Error: <lesson_num> argument must be an integer"
-    echoerr "Fix: Try 1..$MAX_LESSON_NUM"
+    echo "Error: <lesson_num> argument must be an integer" >&2
+    echo "Fix: Try 1..$MAX_LESSON_NUM" >&2
     exit 1
 fi
 
 # Check if <lesson_num> argument is less than or equal MAX_LESSON_NUM
 if [[ ! "$LESSON_NUM" -le $MAX_LESSON_NUM ]]; then
     if [[ ${FLAGS[force]} -ne 1 ]]; then
-        echo "$LESSON_NUM exceeds the MAX_LESSON_NUM"
+        echo "Warning: $LESSON_NUM exceeds the MAX_LESSON_NUM"
+        echo "It may affect how I work"
         read -rep "Proceed? [y/n]: " ans
         [[ ! "$ans" =~ ^[yY]$ ]] && exit 0
     fi
 fi
 
-## MAIN JOB
+# ------------------------------------------------------------------- #
+#                             start                                   #
+# ------------------------------------------------------------------- #
 
-if [[ ${FLAGS[begin]} -eq 1 ]]; then
+if [[ ${FLAGS[start]} -eq 1 ]]; then
 
-    ## PRECAUTIONS
+    # ----------------------------------------------------------- #
+    #                         Validation                          #
+    # ----------------------------------------------------------- #
 
     # Check if there is a Lesson with number <lesson_num>
     if [[ -d $LESSON_NUM ]]; then
-        echoerr "Error: Lesson number '$LESSON_NUM' already exists"
-        echoerr "Fix: Try another number"
+        echo "Error: Lesson number '$LESSON_NUM' already exists" >&2
+        echo "Fix: Try another number" >&2
         exit 1
     fi
 
-    ## CREATE DIRECTORIES
+    create_lesson_directories "$LESSON_NUM"
 
-    for dir in "${LESSON_DIRECTORIES[@]}"; do
-        mkdir -p "$LESSON_NUM/$dir"
-    done
-
-    ## MAKEFILE
-
-    # Check if $MAKEFILE_FLAG is on
+    # If '-m, --make' is on
     if [[ -n ${FLAGS[make]} ]]; then
+
+        # --------------------------------------------------- #
+        #                       Validation                    #
+        # --------------------------------------------------- #
 
         # Check that 'new' script is installed
         if [[ ! -x $(command -v new) ]]; then
-            echoerr "Error: command not found 'new'"
-            echoerr "Fix: run the 'install' script"
+            echo "Error: 'new' command not found" >&2
+            echo "Fix: run the 'install' script" >&2
             exit 1
         fi
 
-        # In each $dir create a Makefile
-        for dir in "${LESSON_DIRECTORIES[@]}"; do
-            new --make=${FLAGS[make]} "$LESSON_NUM/$dir/$MAKEFILE"
-        done
+        create_makefiles "$LESSON_NUM"  # In each lesson directory
     fi
 
-    # Create a time-stamp file
-    touch "$LESSON_NUM/.lesson_start"
+    touch "$LESSON_NUM/$TIME_STAMP"  # Create a time-stamp file
 
-    ## BEGIN SCREEN
+    print_start_screen
 
-    columns=$(tput cols)
-    printf "%0.s-" $(seq 1 "$columns")
-    echo ""
-    echo ""
-    echoc "Welcome to Lesson #$LESSON_NUM, $(whoami)!"
-    echo ""
-    echoc "Remember to express your ideas:"
-    echo ""
-    echoc " 1. Correctly"
-    echo ""
-    echoc " 2. Simply"
-    echo ""
-    echoc " 3. Efficiently"
-    echo ""
-    printf "%0.s-" $(seq 1 "$columns")
+# ------------------------------------------------------------------- #
+#                               end                                   #
+# ------------------------------------------------------------------- #
 
 elif [[ ${FLAGS[end]} -eq 1 ]]; then
 
-    ## PRECAUTIONS
+    # ----------------------------------------------------------- #
+    #                         Validation                          #
+    # ----------------------------------------------------------- #
 
     # Check if there is no lesson with number <lesson_num>
     if [[ ! -d $LESSON_NUM ]]; then
-        echoerr "Error: Lesson number '$LESSON_NUM' doesn't exist"
+        echo "Error: Lesson number '$LESSON_NUM' doesn't exist" >&2
         exit 1
     fi
 
-    ## FILE STATS
+    ## ANALYZE EACH DIRECTORY
 
-    style_errors=0
-    exercises_completed=0
-    programs_written=0
-
-    ## FOR EACH DIRECTORY
-
-    for dir in "${LESSON_DIRECTORIES[@]}"; do
-
+    for dir in "${LESSON_DIRS[@]}"; do  # for each directory
         full_dir="$LESSON_NUM/$dir"
 
-        # if directory exists
-        if [[ -d $full_dir ]]; then
+        if [[ -d $full_dir ]]; then  # if directory exists
 
-            ## FOR EACH FILE INSIDE DIRECTORY
-
-            for file in $(ls "$full_dir"); do
-
+            for file in $(ls "$full_dir"); do  # for each file in directory
                 full_file="$LESSON_NUM/$dir/$file"
 
-                ## CHECK THAT FILE HAS EXTENSION
-
-                # if file doesn't have an extension
-                if ! has_ext "$file" && [[ $file != "$MAKEFILE" ]]; then
-                    style_errors=$(( style_errors + 1 ))
-                    echoerr "Style Error: '$full_file' doesn't have an extension."
-                    echoerr "Fix: add an extension."
+                if [[ "$file" != "$MAKEFILE_NAME" ]]; then
+                    check_extension "$full_file"
+                    check_emptiness "$full_file"
                 fi
 
-                ## CHECK THAT FILE IS NOT EMPTY
-
-                if [[ ! -s $full_file ]]; then
-                    style_errors=$(( style_errors + 1 ))
-                    echoerr "Style Error: '$full_file' is empty."
-                    echoerr "Fix: remove it."
-                fi
-
-                ## IF FILE IS AN EXERCISE OR A PROGRAM
                 case $dir in
-                    Exercises | Programs)
-                    if [[ "$(file "$full_file")" =~ "C source" ||
-                          "$(file "$full_file")" =~ "Python script" ]]; then
-                        case $dir in
-                            Exercises)
-                            exercises_completed=$(( exercises_completed + 1 )) ;;
-                            Programs)
-                            programs_written=$(( programs_written + 1 )) ;;
-                        esac
-                    fi
+                    exercises | programs)
+                        collect_file_stats "$dir" "$full_file" ;;
                 esac
-
             done
 
-            ## REMOVE EMPTY DIRECTORIES
-
-            # If directory is empty or only has a $MAKEFILE inside
-            if isempty "$full_dir" ||
-               [[ -f $full_dir/$MAKEFILE && $(filenum "$full_dir") -eq 1 ]]; then
-                rm -r "$full_dir"
-            fi
-
+            remove_empty_directory "$full_dir" # empty or only has a makefile
         fi
+
     done
 
-    # Exit if have 'style' errors
-    [[ $style_errors -gt 0 ]] && exit 1
+    [[ $STYLE_ERRORS -gt 0 ]] && exit 1 # Exit if have 'style' errors
 
-    ## TIME STATS
-
-    if [[ -f $LESSON_NUM/.lesson_start ]]; then
-
-        duration=$(( $(date +%s) - $(stat -c "%Y" "$LESSON_NUM/.lesson_start") ))
-        hours=$(( duration / 3600 ))
-        minutes=$(( duration / 60 - hours * 60))
-        seconds=$(( duration % 60 ))
-
-        # Delete a time-stamp file
-        rm "$LESSON_NUM/.lesson_start"
-
-    fi
-
-    ## GIT
+    collect_time_stats "$LESSON_NUM"
 
     # If git repo and changes were made
     if [[ -d ".git" && -n $(git status --porcelain) ]]; then
-
-        git status
-        echo ""
-
+        git status; echo ""
         git add .
-
-        # Tackle 'bad' commit messages
-        while true; do
-            read -rep "Enter commit message: " message
-
-            if [[ ${#message} -lt $MIN_COMMIT_MESSAGE_LENGTH ]]; then
-                echoerr "Error: commit message must be at least" \
-                        "$MIN_COMMIT_MESSAGE_LENGTH characters long"
-                continue
-            fi
-
-            break
-        done
-
-        echo ""
-        git commit -m "$message"
-        echo ""
-
-        # Tackle wrong login/password issues
-        while true; do
-            git push && break
-            echo ""
-        done
-
+        git_commit
+        git_push
     fi
 
-    ## END SCREEN
+    print_end_screen
 
-    columns=$(tput cols)
-    printf "%0.s-" $(seq 1 "$columns")
-    echo ""
-    echoc "End of lesson #$LESSON_NUM. Goodbye, $(whoami)!"
-    echo ""
-    echoc "Stats:"
-    echo ""
-    echoc " 1. Lesson took $hours:$minutes:$seconds"
-    echo ""
-    echoc " 2. Exercises completed: $exercises_completed"
-    echo ""
-    echoc " 3. Programs written: $programs_written"
-    echo ""
-
-    # remove lesson dir if nothing has been created
     if isempty "$LESSON_NUM"; then
         rmdir "$LESSON_NUM"
     else
         tree "$LESSON_NUM"
     fi
 
-    printf "%0.s-" $(seq 1 "$columns")
 fi
 
 exit 0
