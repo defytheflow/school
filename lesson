@@ -52,6 +52,7 @@ LONG_OPTS="force,help,make:"
 HELP_MSG="Try: 'lesson -h | --help' for more information"
 MAKEFILE_NAME="Makefile"
 TIME_STAMP=".lesson_start"
+LANGUAGE=""
 
 LESSONS_DIR="Lessons"
 LESSON_DIRS=(examples exercises theory whiteboard programs
@@ -105,6 +106,68 @@ is_command()
 # Returns 0 if $1 has a '.something' at the end
 has_ext() { return $( [[ "$1" =~ ^.+\..+$ ]] ); }
 
+# Calculates the lesson number based on $1 command (start | end)
+calculate_lesson_number()
+{
+    local command=$1  # start | end
+
+    case $command in
+        start)
+            lesson_num=$(ls | grep -E '[0-9]+' | sort -n | tail -1)
+            lesson_num=$(( lesson_num + 1))
+            echo $lesson_num  ;;
+        end)
+            lesson_num=$(ls | grep -E '[0-9]+' | sort -n | tail -1)
+            echo $lesson_num  ;;
+    esac
+}
+
+# Counts number of files with c, cpp and py extensions.
+# Returns the language (c, cpp, python) with highest count.
+detect_language()
+{
+    local lesson_num=$1
+    local c=0
+    local cpp=0
+    local py=0
+
+    for file in $(find $lesson_num -type f \( ! -iname $MAKEFILE_NAME \) -printf "%f\n"); do
+        local extension=${file##*.}
+        case $extension in
+            c)
+                c=$(( c + 1 ))     ;;
+            cpp)
+                cpp=$(( cpp + 1 )) ;;
+            py)
+                py=$(( py + 1 ))   ;;
+        esac
+    done
+
+    if [[ $c -gt $cpp && $c -gt $py ]]; then
+        echo c
+    elif [[ $cpp -gt $c && $cpp -gt $py ]]; then
+        echo cpp
+    elif [[ $py -gt $c && $py -gt $cpp ]]; then
+        echo python
+    else
+        echo ""
+    fi
+}
+
+# Just for a nice printing to start and end screens.
+print_language()
+{
+    local language=$1
+    case $1 in
+        c)
+            echo C      ;;
+        cpp)
+            echo C++    ;;
+        python)
+            echo Python ;;
+    esac
+}
+
 # ------------------------------------------------------------------- #
 #                           Functions - start                         #
 # ------------------------------------------------------------------- #
@@ -137,6 +200,7 @@ print_start_screen()
     printf "%0.s-" $(seq 1 "$columns")  # upper border
     echo -e "\n"
     echoc "Welcome to Lesson #$LESSON_NUM, $(whoami)!\n"
+    [[ -n $LANGUAGE ]] && echoc "Language: $(print_language $LANGUAGE)\n"
     echoc "Remember to express your ideas:\n"
     echoc " 1. Correctly\n"
     echoc " 2. Simply\n"
@@ -252,6 +316,7 @@ print_end_screen()
     printf "%0.s-" $(seq 1 "$columns")
     echo -e "\n"
     echoc "End of lesson #$LESSON_NUM. Goodbye, $(whoami)!\n"
+    [[ -n $LANGUAGE ]] && echoc "Language: $(print_language $LANGUAGE)\n"
     echoc "Stats:\n"
     echoc " 1. Lesson took $HOURS_:$MINUTES_:$SECONDS_\n"
     echoc " 2. Exercises completed: $EXERCISES_COMPLETED\n"
@@ -370,23 +435,59 @@ if [[ ! "$(pwd)" =~ .+/$LESSONS_DIR$ ]]; then
     fi
 fi
 
-## SET LESSON_NUM
+# ------------------------------------------------------------------- #
+#                       start-next | end-last                         #
+# ------------------------------------------------------------------- #
+
 
 if [[ ${FLAGS[start-next]} -eq 1 ]]; then
 
-    # find the largest lesson and add + 1
-    LESSON_NUM=$(ls | grep -E '[0-9]+' | sort -n | tail -1)
-    LESSON_NUM=$(( LESSON_NUM + 1 ))
+    LESSON_NUM=$(calculate_lesson_number "start")
+
+    # ----------------------------------------------------------- #
+    #                         Validation                          #
+    # ----------------------------------------------------------- #
+
+    # If we have a previous lesson
+    if [[ $LESSON_NUM -gt 1 ]]; then
+
+        LANGUAGE=$(detect_language $(( LESSON_NUM - 1 )))
+
+        # If previous lesson had a makefile
+        if [[ -n $(find $(( LESSON_NUM - 1 )) -type f -name $MAKEFILE_NAME) ]]; then
+            FLAGS[make]=$LANGUAGE
+        fi
+    fi
+
     FLAGS[start]=1
 
 elif [[ ${FLAGS[end-last]} -eq 1 ]]; then
-    # find the largest lesson
-    LESSON_NUM=$(ls |  grep -E '[0-9]+' | sort -n | tail -1)
+
+    LESSON_NUM=$(calculate_lesson_number "end")
+
+    # ----------------------------------------------------------- #
+    #                         Validation                          #
+    # ----------------------------------------------------------- #
+
+    # If running end-last command on an empty directory.
+    if [[ -z $LESSON_NUM ]]; then
+        echo "Error: no previous lesson found." >&2
+        echo "Fix: try 'lesson start-next'." >&2
+        exit 1
+    fi
+
+    LANGUAGE=$(detect_language $LESSON_NUM)
     FLAGS[end]=1
 
-else
-    # remove parent directory names
-    LESSON_NUM=${1##*/}
+elif [[ ${FLAGS[start]} -eq 1 ]]; then
+    LESSON_NUM=${1##*/}  # remove parent directory names
+    if [[ $LESSON_NUM -gt 1 ]]; then
+        LANGUAGE=$(detect_language $(( LESSON_NUM - 1 )))
+    fi
+
+elif [[ ${FLAGS[end]} -eq 1 ]]; then
+    LESSON_NUM=${1##*/}  # remove parent directory names
+    LANGUAGE=$(detect_language $LESSON_NUM)
 fi
 
 shift
