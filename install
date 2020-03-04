@@ -32,9 +32,12 @@ declare -A FLAGS=(
     [schl]=0  # -s, --school
 )
 
+GITHUB="https://github.com/defytheflow"
+
 declare -A GIT_REPOS=(
-    [dot]="https://github.com/defytheflow/dotfiles.git"
-    [sdk]="https://github.com/defytheflow/sdk.git"
+    [dot]="$GITHUB/dotfiles.git"
+    [sdk]="$GITHUB/sdk.git"
+    [pylib]="$GITHUB/pylib.git"
 )
 
 declare -A JS_PACKAGES=(
@@ -272,7 +275,10 @@ if [[ ${FLAGS[py]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
     if [[ ! -d $HOME/.lib ]]; then
         mkdir "$HOME/.lib"
     fi
-    cp -i lib/python/*.py "$HOME/.lib"
+
+    git clone "${GIT_REPOS[pylib]}" > /dev/null 2>&1
+    cp -i pylib/*.py "$HOME/.lib"
+    rm -rf pylib
     echo ""
 
 fi
