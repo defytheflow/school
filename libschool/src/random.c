@@ -1,8 +1,8 @@
-#include "random.h"
+#include <random.h>
 
-#include <time.h>
 #include <assert.h>
 #include <stdlib.h>
+#include <time.h>
 
 int rand_int(int min, int max)
 /* Returns a pseudo-random integer in range[min, max]. */
