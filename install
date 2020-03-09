@@ -1,47 +1,48 @@
 #!/bin/bash
 
-usage() {
-    echo -e "Installs scripts, packages and programs for coding lessons.\n"
-    echo "Usage:"
+usage()
+{
+    echo -e "Installs packages for coding lessons.\n"
+
+    echo    "Usage:"
     echo -e "  install [options]\n"
-    echo "Options:"
-    echo "  -a, --all         install all."
-    echo "  -c                install C packages."
-    echo "  -d, --dotfiles    download and set up 'dotfiles' repository."
-    echo "  -f, --fun         install programs for fun."
-    echo "  -h, --help        display a usage message."
-    echo "  -j, --js          install javascript packages."
-    echo "  -P, --product     install programs for 'productivity'."
-    echo "  -p, --python      install python packages."
-    echo "  -S, --sdk         download and set up scripts from 'sdk' repo."
-    echo "  -s, --school      set up scripts and libs from 'school' repo."
-    echo ""
-    echo "Author:"
+
+    echo    "Options:"
+    echo    "  -a, --all         install all."
+    echo    "  -c, --c           install C packages."
+    echo    "  -d, --dot         download and set up 'dotfiles' repository."
+    echo    "  -f, --fun         install programs for fun."
+    echo    "  -h, --help        display a usage message."
+    echo    "  -p, --python      install python packages."
+    echo    "  -S, --sdk         download and set up scripts from 'sdk' repo."
+    echo -e "  -s, --school      set up scripts and libs from 'school' repo.\n"
+
+    echo    "Author:"
     echo -e "  Artyom Danilov\n"
 }
+
+# ------------------------------------------------------------------- #
+#                          Global variables                           #
+# ------------------------------------------------------------------- #
+
+SHORT_OPTS="acdfhpSs"
+LONG_OPTS="all,dotfiles,fun,help,python,school,sdk"
+GITHUB="https://github.com/defytheflow"
 
 declare -A FLAGS=(
     [all]=0   # -a, --all
     [c]=0     # -c
-    [dot]=0   # -d, --dotfiles
+    [dot]=0   # -d, --dot
     [fun]=0   # -f, --fun
-    [js]=0    # -j, --js
-    [prod]=0  # -P, --product
     [py]=0    # -p, --python
     [sdk]=0   # -S, --sdk
     [schl]=0  # -s, --school
 )
 
-GITHUB="https://github.com/defytheflow"
-
 declare -A GIT_REPOS=(
     [dot]="$GITHUB/dotfiles.git"
     [sdk]="$GITHUB/sdk.git"
     [pylib]="$GITHUB/pylib.git"
-)
-
-declare -A JS_PACKAGES=(
-    ["npm"]="npm"
 )
 
 declare -A PY_PACKAGES=(
@@ -51,23 +52,21 @@ declare -A PY_PACKAGES=(
     ["pylint3"]="pylint3"
 )
 
-declare -A PROD_PROGS=(
-    ["gtypist"]="gtypist"
-    ["youtube-dl"]="youtube-dl"
-)
-
 PIP_PACKAGES=("ipython")
 FUN_PROGS=(figlet lolcat cowsay cmatrix fortune rig)
 
 ESSENTIALS=(git vim tmux tree)
 COMPLEMENTS=(howdoi)
 
+# ------------------------------------------------------------------- #
+#                           Functions                                 #
+# ------------------------------------------------------------------- #
+
 install_from_array() {
 
     local progs=($@)
     for prog in "${progs[@]}"; do
         printf "%-60s" "  Checking that'$prog' is installed."
-        # echo -n "  Checking that '$prog' is installed."
         if [[ ! -x $(command -v "$prog") ]]; then
             echo "  Installing '$prog'..."
             yes | sudo apt-get install "$prog"
@@ -95,43 +94,46 @@ install_from_dict() {
 
 }
 
+# ------------------------------------------------------------------- #
+#                           Validation                                #
+# ------------------------------------------------------------------- #
+
 # Display a usage message if no options given
 if [[ $# -eq 0 ]]; then
     usage
     exit 0
 fi
 
-# Parse options
-short_options="acdfhjPpSs"
-long_options="all,dotfiles,fun,help,js,product,python,school,sdk"
+# ------------------------------------------------------------------- #
+#                           Parse options                             #
+# ------------------------------------------------------------------- #
 
-options=$(getopt -o $short_options -l $long_options -- "$@")
+ARGV=$(getopt -o $SHORT_OPTS -l $LONG_OPTS -- "$@")
 
 if [[ $? -ne 0 ]]; then
-    echoerr "Try 'install -h | --help' for more information."
+    echo "Try 'install -h | --help' for more information." >&2
     exit 1
 fi
 
-eval set -- "$options"  # sets $options as script arguments
+eval set -- "$ARGV"
 
-# Set options
+# ------------------------------------------------------------------- #
+#                           Toggle options                            #
+# ------------------------------------------------------------------- #
+
 while true; do
     case "$1" in
         -a | --all)
             FLAGS[all]=1    ;;
-        -c)
+        -c | --c)
             FLAGS[c]=1      ;;
-        -d | --dotfiles)
+        -d | --dot)
             FLAGS[dot]=1    ;;
         -f | --fun)
             FLAGS[fun]=1    ;;
         -h | --help)
             usage
             exit 0            ;;
-        -j | --js)
-            FLAGS[js]=1     ;;
-        -P | --product)
-            FLAGS[prod]=1   ;;
         -p | --python)
             FLAGS[py]=1     ;;
         -S | --sdk)
@@ -145,6 +147,10 @@ while true; do
     shift
 done
 
+# ------------------------------------------------------------------- #
+#                           Validation                                #
+# ------------------------------------------------------------------- #
+
 # Check internet connection
 echo "Checking your internet connection."
 if ! wget -q --spider https://google.com; then
@@ -153,7 +159,10 @@ if ! wget -q --spider https://google.com; then
 fi
 echo ""
 
-# Ask to update the system
+# ------------------------------------------------------------------- #
+#                          System update                              #
+# ------------------------------------------------------------------- #
+
 # TESTS: ubuntu - OK, wsl - OK
 read -rep "Update system? [y/n]: " ans
 if [[ "$ans" =~ ^[yY]$ ]]; then
@@ -172,6 +181,10 @@ if [[ "$ans" =~ ^[yY]$ ]]; then
 fi
 echo ""
 
+# ------------------------------------------------------------------- #
+#                       Default installation                          #
+# ------------------------------------------------------------------- #
+
 echo "ESSENTIALS"
 install_from_array "${ESSENTIALS[@]}"
 echo ""
@@ -180,7 +193,10 @@ echo "COMPLEMENTS"
 install_from_array "${COMPLEMENTS[@]}"
 echo ""
 
-# '-c' Install C programs and packages
+# ------------------------------------------------------------------- #
+#                                C                                    #
+# ------------------------------------------------------------------- #
+
 # TESTS: ubuntu - OK, wsl - OK
 if [[ ${FLAGS[c]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
 
@@ -195,25 +211,17 @@ if [[ ${FLAGS[c]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
     fi
 
     echo "  Setting up C 'school' library..."
-    # C - library
-    sudo cp -i includes/c/*.h /usr/local/include
-    sudo cp -i includes/c++/*.h /usr/local/include
 
-    # Compile school lib
-    gcc lib/c/*.c -c -fPIC > /dev/null
-    gcc *.o -shared -o libschool.so
-    rm *.o
+    # TODO add call to makefile for installation
 
-    # Set up C school lib
-    sudo mv -i libschool.so /usr/local/lib
-    [[ -f libschool.so ]] && rm libschool.so
-
-    # So that library changes took place
-    sudo ldconfig
+    sudo ldconfig # So that library changes took place
     echo ""
 fi
 
-# '-d' - Download dotfiles
+# ------------------------------------------------------------------- #
+#                              DOT                                    #
+# ------------------------------------------------------------------- #
+
 # TESTS: ubuntu - OK, wsl - OK
 if [[ ${FLAGS[dot]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
     echo "DOTFILES"
@@ -222,12 +230,16 @@ if [[ ${FLAGS[dot]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
 
     echo "  Setting up 'dotfiles'..."
     shopt -s dotglob
-    find dotfiles/public -maxdepth 1 -type f -exec mv -i {} "$HOME" \;
+    find dotfiles/bash -maxdepth 1 -type f -exec mv -i {} "$HOME" \;
+    find dotfiles/ -maxdepth 1 -type f -exec mv -i {} "$HOME" \;
     rm -rf dotfiles
     echo ""
 fi
 
-# '-f' - Install fun programs
+# ------------------------------------------------------------------- #
+#                              FUN                                    #
+# ------------------------------------------------------------------- #
+
 # TESTS: ubuntu - OK, wsl - OK
 if [[ ${FLAGS[fun]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
     echo "FUN PROGRAMS"
@@ -235,23 +247,10 @@ if [[ ${FLAGS[fun]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
     echo ""
 fi
 
-# '-j' - Install JavaScript packages
-# TESTS: ubuntu - OK, wsl - OK
-if [[ ${FLAGS[js]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
-    echo "JAVA SCRIPT PACKAGES"
-    install_from_dict JS_PACKAGES
-    echo ""
-fi
+# ------------------------------------------------------------------- #
+#                             PYTHON                                  #
+# ------------------------------------------------------------------- #
 
-# '-P' - Install programs for productivity
-# TESTS: ubuntu - OK, wsl - OK
-if [[ ${FLAGS[prod]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
-    echo "PRODUCTIVITY PROGRAMS"
-    install_from_dict PROD_PROGS
-    echo ""
-fi
-
-# '-p' - Install python packages - TESTED on wsl
 # TESTS: ubuntu - OK, wsl - BUG on ipython
 if [[ ${FLAGS[py]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
 
@@ -283,7 +282,10 @@ if [[ ${FLAGS[py]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
 
 fi
 
-# '-S' - Download and set up scripts from 'sdk' repository
+# ------------------------------------------------------------------- #
+#                              SDK                                    #
+# ------------------------------------------------------------------- #
+
 # TESTS: ubuntu - OK, wsl - OK
 if [[ ${FLAGS[sdk]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
 
@@ -300,6 +302,7 @@ if [[ ${FLAGS[sdk]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
         sudo rm /usr/share/templates/*
     fi
 
+    # TODO  call makefile from sdk repository
     sudo cp sdk/templates/* /usr/share/templates/
     sudo cp -i sdk/new   /usr/local/bin
 
@@ -310,7 +313,10 @@ if [[ ${FLAGS[sdk]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
 
 fi
 
-# '-s' - Set up Scripts from 'school' repository
+# ------------------------------------------------------------------- #
+#                           SCHOOL                                    #
+# ------------------------------------------------------------------- #
+
 # TESTS: ubuntu - OK, wsl - OK
 if [[ ${FLAGS[schl]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
 
