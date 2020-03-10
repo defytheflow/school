@@ -15,9 +15,6 @@ usage()
     echo    "  -f, --force                  disable warnings."
     echo -e "  -h, --help                   display this message.\n"
 
-    echo    "  -m <lang>, --make <lang>     create a makefile for a particular"
-    echo -e "                               language inside of each directory.\n"
-
     echo    "Commands:"
     echo    "  start <lesson_num>           creates the directories and files"
     echo -e "                               for the lesson.\n"
@@ -47,20 +44,17 @@ usage()
 #                          Global variables                           #
 # ------------------------------------------------------------------- #
 
-SHORT_OPTS="fhm:"
-LONG_OPTS="force,help,make:"
+SHORT_OPTS="fh"
+LONG_OPTS="force,help"
 HELP_MSG="Try: 'lesson -h | --help' for more information"
-MAKEFILE_NAME="Makefile"
 TIME_STAMP=".lesson_start"
 LANGUAGE=""
 
 LESSONS_DIR="Lessons"
-LESSON_DIRS=(examples exercises theory whiteboard programs
-                    homework todo ideas modules)
+LESSON_DIRS=(examples exercises theory whiteboard programs todo)
 
 declare -A FLAGS=(
     [force]=0  # -f, --force
-    [make]=""  # -m, --make
 )
 
 declare -A COMMANDS=(
@@ -131,7 +125,7 @@ detect_language()
     local cpp=0
     local py=0
 
-    for file in $(find $lesson_num -type f \( ! -iname $MAKEFILE_NAME \) -printf "%f\n"); do
+    for file in $(find $lesson_num -type f -printf "%f\n"); do
         local extension=${file##*.}
         case $extension in
             c)
@@ -182,17 +176,6 @@ create_lesson_directories()
     done
 }
 
-# In eacn of the LESSON_DIRS creates a Makefile
-create_makefiles()
-{
-    local lesson_num=$1
-
-    for dir in "${LESSON_DIRS[@]}"; do
-        new --make=${FLAGS[make]}
-        mv "$MAKEFILE_NAME" "$lesson_num/$dir/$MAKEFILE_NAME"
-    done
-}
-
 print_start_screen()
 {
     local columns=$(tput cols)
@@ -218,7 +201,7 @@ check_extension()
 {
     local file=$1
 
-    if ! has_ext "$file" && [[ $file != "$MAKEFILE_NAME" ]]; then
+    if ! has_ext "$file"; then
         STYLE_ERRORS=$(( STYLE_ERRORS + 1 ))
         echo "Style Error: '$file' doesn't have an extension." >&2
         echo "Fix: add an extension." >&2
@@ -236,15 +219,12 @@ check_emptiness()
     fi
 }
 
-# If $1 dir is empty or only has a makefile -> remove it.
+# If $1 dir is empty -> remove it.
 remove_empty_directory()
 {
     local dir=$1
 
-    if isempty "$dir" ||
-        [[ -f $dir/$MAKEFILE_NAME && $(filenum "$dir") -eq 1 ]]; then
-        rm -r "$dir"
-    fi
+    isempty "$dir" && rm -r "$dir"
 }
 
 # Increases EXERCISES_COMPLETED | PROGRAMS_WRITTEN depending on $1 mode
@@ -348,21 +328,6 @@ while true; do
         -h | --help)
             usage
             exit 0            ;;
-        -m | --make)  # BAD !!!
-            shift
-            if [[ $1 == "c" || $1 == "cpp" ]]; then
-                FLAGS[make]=$1
-            elif is_command "$1"; then
-                echo "Error: '-m, --make' option requires an argument." >&2
-                echo "$HELP_MSG" >&2
-                exit 1
-            else
-                echo "Error: '$1' makefile is not supported." >&2
-                echo "Supported makefiles: c, cpp" >&2
-                echo "$HELP_MSG" >&2
-                exit 1
-            fi
-                            ;;
         --)
             shift
             break           ;;
@@ -424,7 +389,7 @@ esac
 # ------------------------------------------------------------------- #
 #                           Validation                                #
 # ------------------------------------------------------------------- #
-
+# TODO
 # Check if inside of LESSONS_DIR directory
 if [[ ! "$(pwd)" =~ .+/$LESSONS_DIR$ ]]; then
     if [[ ${FLAGS[force]} -ne 1 ]]; then
@@ -450,13 +415,7 @@ if [[ ${FLAGS[start-next]} -eq 1 ]]; then
 
     # If we have a previous lesson
     if [[ $LESSON_NUM -gt 1 ]]; then
-
         LANGUAGE=$(detect_language $(( LESSON_NUM - 1 )))
-
-        # If previous lesson had a makefile
-        if [[ -n $(find $(( LESSON_NUM - 1 )) -type f -name $MAKEFILE_NAME) ]]; then
-            FLAGS[make]=$LANGUAGE
-        fi
     fi
 
     FLAGS[start]=1
@@ -532,23 +491,6 @@ if [[ ${FLAGS[start]} -eq 1 ]]; then
 
     create_lesson_directories "$LESSON_NUM"
 
-    # If '-m, --make' is on
-    if [[ -n ${FLAGS[make]} ]]; then
-
-        # --------------------------------------------------- #
-        #                       Validation                    #
-        # --------------------------------------------------- #
-
-        # Check that 'new' script is installed
-        if [[ ! -x $(command -v new) ]]; then
-            echo "Error: 'new' command not found" >&2
-            echo "Fix: run the 'install' script" >&2
-            exit 1
-        fi
-
-        create_makefiles "$LESSON_NUM"  # In each lesson directory
-    fi
-
     touch "$LESSON_NUM/$TIME_STAMP"  # Create a time-stamp file
 
     print_start_screen
@@ -579,10 +521,8 @@ elif [[ ${FLAGS[end]} -eq 1 ]]; then
             for file in $(ls "$full_dir"); do  # for each file in directory
                 full_file="$LESSON_NUM/$dir/$file"
 
-                if [[ "$file" != "$MAKEFILE_NAME" ]]; then
-                    check_extension "$full_file"
-                    check_emptiness "$full_file"
-                fi
+                check_extension "$full_file"
+                check_emptiness "$full_file"
 
                 case $dir in
                     exercises | programs)
@@ -590,9 +530,8 @@ elif [[ ${FLAGS[end]} -eq 1 ]]; then
                 esac
             done
 
-            remove_empty_directory "$full_dir" # empty or only has a makefile
+            remove_empty_directory "$full_dir" # empty
         fi
-
     done
 
     [[ $STYLE_ERRORS -gt 0 ]] && exit 1 # Exit if have 'style' errors
