@@ -26,7 +26,7 @@ usage()
 # ------------------------------------------------------------------- #
 
 SHORT_OPTS="acdfhpSs"
-LONG_OPTS="all,dotfiles,fun,help,python,school,sdk"
+LONG_OPTS="all,c,dot,fun,help,python,school,sdk"
 GITHUB="https://github.com/defytheflow"
 
 declare -A FLAGS=(
@@ -40,7 +40,7 @@ declare -A FLAGS=(
 )
 
 declare -A GIT_REPOS=(
-    [dot]="$GITHUB/dotfiles.git"
+    [dot]="$GITHUB/dot.git"
     [sdk]="$GITHUB/sdk.git"
     [pylib]="$GITHUB/pylib.git"
 )
@@ -224,15 +224,14 @@ fi
 
 # TESTS: ubuntu - OK, wsl - OK
 if [[ ${FLAGS[dot]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
-    echo "DOTFILES"
-    echo "  Downloading 'dotfiles' repository from git..."
+    echo -e "DOT\n  Downloading 'dot' repository from git..."
     git clone "${GIT_REPOS[dot]}" > /dev/null 2>&1
 
-    echo "  Setting up 'dotfiles'..."
+    echo "  Setting up 'dot'..."
     shopt -s dotglob
-    find dotfiles/bash -maxdepth 1 -type f -exec mv -i {} "$HOME" \;
-    find dotfiles/ -maxdepth 1 -type f -exec mv -i {} "$HOME" \;
-    rm -rf dotfiles
+    find dot/bash -maxdepth 1 -type f -exec mv -i {} "$HOME" \;
+    find dot/ -maxdepth 1 -type f -exec mv -i {} "$HOME" \;
+    rm -rf dot
     echo ""
 fi
 
@@ -289,28 +288,13 @@ fi
 # TESTS: ubuntu - OK, wsl - OK
 if [[ ${FLAGS[sdk]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
 
-    echo "SDK"
-    echo "  Downloading 'sdk' repository from git..."
+    echo -e "SDK\n  Downloading 'sdk' repository from git..."
     git clone "${GIT_REPOS[sdk]}" > /dev/null 2>&1
 
     echo "  Setting up 'sdk' scripts..."
-
-    # 'new' script
-    if [[ ! -d /usr/share/templates ]]; then
-        sudo mkdir /usr/share/templates
-    elif ! isempty /usr/share/templates; then
-        sudo rm /usr/share/templates/*
-    fi
-
-    # TODO  call makefile from sdk repository
-    sudo cp sdk/templates/* /usr/share/templates/
-    sudo cp -i sdk/new   /usr/local/bin
-
-    # 'clean' script
-    sudo cp -i sdk/clean /usr/local/bin
+    make --silent --directory=sdk install
     rm -rf sdk
     echo ""
-
 fi
 
 # ------------------------------------------------------------------- #
@@ -319,12 +303,9 @@ fi
 
 # TESTS: ubuntu - OK, wsl - OK
 if [[ ${FLAGS[schl]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
-
-    echo "SCHOOL"
-    echo "  Setting up 'school' scripts..."
-    sudo cp -i lesson /usr/local/bin  # 'lesson' script
+    echo -e "SCHOOL\n  Setting up 'school' scripts..."
+    sudo cp -f lesson /usr/local/bin  # 'lesson' script
     echo ""
-
 fi
 
 echo "You are good to go!"
