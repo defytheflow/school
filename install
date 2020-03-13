@@ -2,23 +2,23 @@
 
 usage()
 {
-    printf "%b"                                                            \
-    "Installs packages for coding lessons.\n\n"                            \
-                                                                           \
-    "Usage:\n"                                                             \
-    "  install [options]\n\n"                                              \
-                                                                           \
-    "Options:\n"                                                           \
-    "  -a, --all         install all.\n"                                   \
-    "  -c, --c           install C packages.\n"                            \
-    "  -d, --dot         download and set up 'dotfiles' repository.\n"     \
-    "  -f, --fun         install programs for fun.\n"                      \
-    "  -h, --help        display a usage message.\n"                       \
-    "  -p, --python      install python packages.\n"                       \
-    "  -S, --sdk         download and set up scripts from 'sdk' repo.\n"   \
-    "  -s, --school      set up scripts and libs from 'school' repo.\n\n"  \
-                                                                           \
-    "Author:\n"                                                            \
+    printf "%b"                                                                \
+    "Installs packages for coding lessons.\n\n"                                \
+                                                                               \
+    "Usage:\n"                                                                 \
+    "  install [options]\n\n"                                                  \
+                                                                               \
+    "Options:\n"                                                               \
+    "  -a, --all         install all.\n"                                       \
+    "  -c, --c           install C packages.\n"                                \
+    "  -d, --dot         download and set up 'dotfiles' repository.\n"         \
+    "  -f, --fun         install programs for fun.\n"                          \
+    "  -h, --help        display a usage message.\n"                           \
+    "  -p, --python      install python packages.\n"                           \
+    "  -S, --sdk         download and set up scripts from 'sdk' repo.\n"       \
+    "  -s, --school      set up scripts and libs from 'school' repo.\n\n"      \
+                                                                               \
+    "Author:\n"                                                                \
     "  Artyom Danilov\n\n"
 }
 

@@ -2,42 +2,42 @@
 
 usage()
 {
-    printf "%b"                                                              \
-    "Creates an environment for a coding lesson.\n\n"                        \
-                                                                             \
-    "Usage:\n"                                                               \
-    "  lesson [options] <command>\n\n"                                       \
-                                                                             \
-    "Arguments:\n"                                                           \
-    "  command                      name of the command.\n"                  \
-    "  lesson_num                   the lesson number.\n\n"                  \
-                                                                             \
-    "Options:\n"                                                             \
-    "  -f, --force                  disable warnings.\n"                     \
-    "  -h, --help                   display this message.\n\n"               \
-                                                                             \
-    "Commands:\n"                                                            \
-    "  start <lesson_num>           creates the directories and files\n"     \
-    "                               for the lesson.\n\n"                     \
-                                                                             \
-    "  start-next                   same as start, but automatically\n"      \
-    "                               calculates <lesson_num>.\n\n"            \
-                                                                             \
-    "  end <lesson_num>             removes unused directories, displays\n"  \
-    "                               stats and pushes to git.\n\n"            \
-                                                                             \
-    "  end-last                     same as end, but automatically\n"        \
-    "                               calculates <lesson_num>.\n\n"            \
-                                                                             \
-    "  help                         displays a help message.\n\n"            \
-                                                                             \
-    "Examples:\n"                                                            \
-    "  lesson start 1\n"                                                     \
-    "  lesson start-next\n"                                                  \
-    "  lesson end 1\n"                                                       \
-    "  lesson end-last\n\n"                                                  \
-                                                                             \
-    "Author:\n"                                                              \
+    printf "%b"                                                                \
+    "Creates an environment for a coding lesson.\n\n"                          \
+                                                                               \
+    "Usage:\n"                                                                 \
+    "  lesson [options] <command>\n\n"                                         \
+                                                                               \
+    "Arguments:\n"                                                             \
+    "  command                      name of the command.\n"                    \
+    "  lesson_num                   the lesson number.\n\n"                    \
+                                                                               \
+    "Options:\n"                                                               \
+    "  -f, --force                  disable warnings.\n"                       \
+    "  -h, --help                   display this message.\n\n"                 \
+                                                                               \
+    "Commands:\n"                                                              \
+    "  start <lesson_num>           creates the directories and files\n"       \
+    "                               for the lesson.\n\n"                       \
+                                                                               \
+    "  start-next                   same as start, but automatically\n"        \
+    "                               calculates <lesson_num>.\n\n"              \
+                                                                               \
+    "  end <lesson_num>             removes unused directories, displays\n"    \
+    "                               stats and pushes to git.\n\n"              \
+                                                                               \
+    "  end-last                     same as end, but automatically\n"          \
+    "                               calculates <lesson_num>.\n\n"              \
+                                                                               \
+    "  help                         displays a help message.\n\n"              \
+                                                                               \
+    "Examples:\n"                                                              \
+    "  lesson start 1\n"                                                       \
+    "  lesson start-next\n"                                                    \
+    "  lesson end 1\n"                                                         \
+    "  lesson end-last\n\n"                                                    \
+                                                                               \
+    "Author:\n"                                                                \
     "  Artyom Daniov\n\n"
 }
 
