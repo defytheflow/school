@@ -2,23 +2,24 @@
 
 usage()
 {
-    echo -e "Installs packages for coding lessons.\n"
-
-    echo    "Usage:"
-    echo -e "  install [options]\n"
-
-    echo    "Options:"
-    echo    "  -a, --all         install all."
-    echo    "  -c, --c           install C packages."
-    echo    "  -d, --dot         download and set up 'dotfiles' repository."
-    echo    "  -f, --fun         install programs for fun."
-    echo    "  -h, --help        display a usage message."
-    echo    "  -p, --python      install python packages."
-    echo    "  -S, --sdk         download and set up scripts from 'sdk' repo."
-    echo -e "  -s, --school      set up scripts and libs from 'school' repo.\n"
-
-    echo    "Author:"
-    echo -e "  Artyom Danilov\n"
+    printf "%b"                                                            \
+    "Installs packages for coding lessons.\n\n"                            \
+                                                                           \
+    "Usage:\n"                                                             \
+    "  install [options]\n\n"                                              \
+                                                                           \
+    "Options:\n"                                                           \
+    "  -a, --all         install all.\n"                                   \
+    "  -c, --c           install C packages.\n"                            \
+    "  -d, --dot         download and set up 'dotfiles' repository.\n"     \
+    "  -f, --fun         install programs for fun.\n"                      \
+    "  -h, --help        display a usage message.\n"                       \
+    "  -p, --python      install python packages.\n"                       \
+    "  -S, --sdk         download and set up scripts from 'sdk' repo.\n"   \
+    "  -s, --school      set up scripts and libs from 'school' repo.\n\n"  \
+                                                                           \
+    "Author:\n"                                                            \
+    "  Artyom Danilov\n\n"
 }
 
 # ------------------------------------------------------------------- #
