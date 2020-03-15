@@ -2,34 +2,34 @@
 
 usage()
 {
-    printf "%b"                                                                \
-    "Installs packages for coding lessons.\n\n"                                \
+    printf '%b'                                                                \
+    'Installs packages for coding lessons.\n\n'                                \
                                                                                \
-    "Usage:\n"                                                                 \
-    "  install [options]\n\n"                                                  \
+    'Usage:\n'                                                                 \
+    '  install [options]\n\n'                                                  \
                                                                                \
-    "Options:\n"                                                               \
-    "  -a, --all         install all.\n"                                       \
-    "  -c, --c           install C packages.\n"                                \
-    "  -d, --dot         download and set up 'dotfiles' repository.\n"         \
-    "  -f, --fun         install programs for fun.\n"                          \
-    "  -h, --help        display a usage message.\n"                           \
-    "  -p, --python      install python packages.\n"                           \
-    "      --sdk         download and set up scripts from 'sdk' repo.\n"       \
-    "      --school      set up scripts and libs from 'school' repo.\n"        \
-    "      --sys         download and set up scripts from 'sys' repo.\n\n"     \
+    'Options:\n'                                                               \
+    '  -a, --all         install all.\n'                                       \
+    '  -c, --c           install C packages.\n'                                \
+    '  -d, --dot         download and set up dot repository.\n'                \
+    '  -f, --fun         install programs for fun.\n'                          \
+    '  -h, --help        display a usage message.\n'                           \
+    '  -p, --python      install python packages.\n'                           \
+    '      --sdk         download and set up scripts from sdk repo.\n'         \
+    '      --school      set up scripts and libs from school repo.\n'          \
+    '      --sys         download and set up scripts from sys repo.\n\n'       \
                                                                                \
-    "Author:\n"                                                                \
-    "  Artyom Danilov\n\n"
+    'Author:\n'                                                                \
+    '  Artyom Danilov\n\n'
 }
 
 # ---------------------------------------------------------------------------- #
 #                               Global Variables                               #
 # ---------------------------------------------------------------------------- #
 
-SHORT_OPTS="acdfhp"
-LONG_OPTS="all,c,dot,fun,help,python,school,sdk,sys"
-GITHUB="https://github.com/defytheflow"
+SHORT_OPTS='acdfhp'
+LONG_OPTS='all,c,dot,fun,help,python,school,sdk,sys'
+GITHUB='https://github.com/defytheflow'
 
 declare -A FLAGS=(
     [all]=0   # -a, --all
@@ -50,13 +50,13 @@ declare -A GIT_REPOS=(
 )
 
 declare -A PY_PACKAGES=(
-    ["python3"]="python3"
-    ["pip3"]="python3-pip"
-    ["ipython"]="ipython"
-    ["pylint3"]="pylint3"
+    [python3]='python3'
+    [pip3]='python3-pip'
+    [ipython]='ipython'
+    [pylint3]='pylint3'
 )
 
-PIP_PACKAGES=("ipython")
+PIP_PACKAGES=(ipython)
 FUN_PROGS=(figlet lolcat cowsay cmatrix fortune rig)
 
 ESSENTIALS=(git vim tmux tree)
@@ -66,36 +66,49 @@ COMPLEMENTS=(howdoi)
 #                                  Functions                                   #
 # ---------------------------------------------------------------------------- #
 
-install_from_array() {
-
+install_from_array()
+{
     local progs=($@)
+
     for prog in "${progs[@]}"; do
-        printf "%-60s" "  Checking that'$prog' is installed."
+        printf "%-60s" "  Checking that '$prog' is installed."
         if [[ ! -x $(command -v "$prog") ]]; then
             echo "  Installing '$prog'..."
             yes | sudo apt-get install "$prog"
             clear
         else
-            printf "%10s\n" "[ OK ]"
+            printf '%10s\n' '[ OK ]'
         fi
     done
-
 }
 
-install_from_dict() {
-
+install_from_dict()
+{
     local -n progs=$1
+
     for prog in "${!progs[@]}"; do
-        printf "%-60s" "  Checking that'$prog' is installed."
+        printf "%-60s" "  Checking that '$prog' is installed."
         if [[ ! -x $(command -v "$prog") ]]; then
             echo "  Installing '$prog'..."
             yes | sudo apt-get install "${progs[$prog]}"
             clear
         else
-            printf "%10s\n" "[ OK ]"
+            printf '%10s\n' '[ OK ]'
         fi
     done
+}
 
+install_from_repo()
+{
+    local repo=$1
+
+    echo -e "${repo^^}\n  Downloading '$repo' repositpry from git..."
+    git clone "${GIT_REPOS[$repo]}" > /dev/null 2>&1
+
+    echo "  Setting up '$repo'..."
+    make --silent --directory=$repo install
+    rm -rf $repo
+    echo ''
 }
 
 # ---------------------------------------------------------------------------- #
@@ -158,46 +171,46 @@ done
 # ---------------------------------------------------------------------------- #
 
 # Check internet connection
-echo "Checking your internet connection."
+echo 'Checking your internet connection.'
 if ! wget -q --spider https://google.com; then
-    echoerr "Error: no internet connection"
+    echo 'Error: no internet connection' >&2
     exit 1
 fi
-echo ""
+echo ''
 
 # ---------------------------------------------------------------------------- #
 #                                System Update                                 #
 # ---------------------------------------------------------------------------- #
 
 # TESTS: ubuntu - OK, wsl - OK
-read -rep "Update system? [y/n]: " ans
+read -rep 'Update system? [y/n]: ' ans
 if [[ "$ans" =~ ^[yY]$ ]]; then
 
-    echo "Updating packages list..."
+    echo 'Updating packages list...'
     yes | sudo apt-get update
-    echo "Upgrading packages..."
+    echo 'Upgrading packages...'
     yes | sudo apt-get upgrade
-    echo "Removing no longer needed packages..."
+    echo 'Removing no longer needed packages...'
     yes | sudo apt-get autoremove
-    echo "Running dpkg --configure -a"
+    echo 'Running dpkg --configure -a'
     # WSL always asks to run this command, without it fails to install
     sudo dpkg --configure -a > /dev/null 2>&1
     clear
 
 fi
-echo ""
+echo ''
 
 # ---------------------------------------------------------------------------- #
 #                               Default Install                                #
 # ---------------------------------------------------------------------------- #
 
-echo "ESSENTIALS"
+echo 'ESSENTIALS'
 install_from_array "${ESSENTIALS[@]}"
-echo ""
+echo ''
 
-echo "COMPLEMENTS"
+echo 'COMPLEMENTS'
 install_from_array "${COMPLEMENTS[@]}"
-echo ""
+echo ''
 
 # ---------------------------------------------------------------------------- #
 #                                      c                                       #
@@ -206,7 +219,7 @@ echo ""
 # TESTS: ubuntu - OK, wsl - OK
 if [[ ${FLAGS[c]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
 
-    echo "C PACKAGES"
+    echo 'C PACKAGES'
     printf "%-60s" "  Checking that 'build-essential' package is insalled."
     if ! dpkg -s build-essential > /dev/null 2>&1; then
         echo "Installing the 'build-essential package'"
@@ -221,7 +234,7 @@ if [[ ${FLAGS[c]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
     # TODO add call to makefile for installation
 
     sudo ldconfig # So that library changes took place
-    echo ""
+    echo ''
 fi
 
 # ---------------------------------------------------------------------------- #
@@ -230,13 +243,7 @@ fi
 
 # TESTS: ubuntu - OK, wsl - OK
 if [[ ${FLAGS[dot]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
-    echo -e "DOT\n  Downloading 'dot' repository from git..."
-    git clone "${GIT_REPOS[dot]}" > /dev/null 2>&1
-
-    echo "  Setting up 'dot'..."
-    make --silent --directory=dot install
-    rm -rf dot
-    echo ""
+    install_from_repo 'dot'
 fi
 
 # ---------------------------------------------------------------------------- #
@@ -245,9 +252,9 @@ fi
 
 # TESTS: ubuntu - OK, wsl - OK
 if [[ ${FLAGS[fun]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
-    echo "FUN PROGRAMS"
+    echo 'FUN PROGRAMS'
     install_from_array "${FUN_PROGS[@]}"
-    echo ""
+    echo ''
 fi
 
 # ---------------------------------------------------------------------------- #
@@ -257,11 +264,11 @@ fi
 # TESTS: ubuntu - OK, wsl - BUG on ipython
 if [[ ${FLAGS[py]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
 
-    echo "PYTHON PACKAGES"
+    echo 'PYTHON PACKAGES'
     install_from_dict PY_PACKAGES
-    echo ""
+    echo ''
 
-    echo "PIP PACKAGES"
+    echo 'PIP PACKAGES'
     for package in "${PIP_PACKAGES[@]}"; do
         printf "%-60s" "  Checking that '$package' is installed."
         if ! pip3 show "$package" > /dev/null; then
@@ -271,17 +278,15 @@ if [[ ${FLAGS[py]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
             printf "%10s\n" "[ OK ]"
         fi
     done
-    echo ""
+    echo ''
 
     echo "  Setting up Python 'school' library..."
-    if [[ ! -d $HOME/.lib ]]; then
-        mkdir "$HOME/.lib"
-    fi
+    [[ ! -d "$HOME/.lib" ]] && mkdir "$HOME/.lib"
 
     git clone "${GIT_REPOS[pylib]}" > /dev/null 2>&1
     cp -i pylib/*.py "$HOME/.lib"
     rm -rf pylib
-    echo ""
+    echo ''
 
 fi
 
@@ -291,7 +296,7 @@ fi
 
 # TESTS: ubuntu - OK, wsl - OK
 if [[ ${FLAGS[schl]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
-    echo -e "SCHOOL\n  Setting up 'school' scripts..."
+    echo -e 'SCHOOL\n  Setting up 'school' scripts...'
     sudo cp -f lesson /usr/local/bin  # 'lesson' script
     echo ""
 fi
@@ -300,33 +305,18 @@ fi
 #                                     sdk                                      #
 # ---------------------------------------------------------------------------- #
 
-# TESTS: ubuntu - OK, wsl - OK
 if [[ ${FLAGS[sdk]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
-
-    echo -e "SDK\n  Downloading 'sdk' repository from git..."
-    git clone "${GIT_REPOS[sdk]}" > /dev/null 2>&1
-
-    echo "  Setting up 'sdk' scripts..."
-    make --silent --directory=sdk install
-    rm -rf sdk
-    echo ""
+    install_from_repo 'sdk'
 fi
+
 # ---------------------------------------------------------------------------- #
 #                                     sys                                      #
 # ---------------------------------------------------------------------------- #
 
-# TESTS: ubuntu - OK, wsl - OK
 if [[ ${FLAGS[sys]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
-
-    echo -e "SYS\n  Downloading 'sys' repository from git..."
-    git clone "${GIT_REPOS[sys]}" > /dev/null 2>&1
-
-    echo "  Setting up 'sys' scripts..."
-    make --silent --directory=sys install
-    rm -rf sys
-    echo ""
+    install_from_repo 'sys'
 fi
 
-echo "You are good to go!"
+echo 'You are good to go!'
 
 exit 0
