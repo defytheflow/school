@@ -15,8 +15,9 @@ usage()
     "  -f, --fun         install programs for fun.\n"                          \
     "  -h, --help        display a usage message.\n"                           \
     "  -p, --python      install python packages.\n"                           \
-    "  -S, --sdk         download and set up scripts from 'sdk' repo.\n"       \
-    "  -s, --school      set up scripts and libs from 'school' repo.\n\n"      \
+    "      --sdk         download and set up scripts from 'sdk' repo.\n"       \
+    "      --school      set up scripts and libs from 'school' repo.\n"        \
+    "      --sys         download and set up scripts from 'sys' repo.\n\n"     \
                                                                                \
     "Author:\n"                                                                \
     "  Artyom Danilov\n\n"
@@ -26,8 +27,8 @@ usage()
 #                               Global Variables                               #
 # ---------------------------------------------------------------------------- #
 
-SHORT_OPTS="acdfhpSs"
-LONG_OPTS="all,c,dot,fun,help,python,school,sdk"
+SHORT_OPTS="acdfhp"
+LONG_OPTS="all,c,dot,fun,help,python,school,sdk,sys"
 GITHUB="https://github.com/defytheflow"
 
 declare -A FLAGS=(
@@ -36,13 +37,15 @@ declare -A FLAGS=(
     [dot]=0   # -d, --dot
     [fun]=0   # -f, --fun
     [py]=0    # -p, --python
-    [sdk]=0   # -S, --sdk
-    [schl]=0  # -s, --school
+    [sdk]=0   #     --sdk
+    [schl]=0  #     --school
+    [sys]=0   #     --sys
 )
 
 declare -A GIT_REPOS=(
     [dot]="$GITHUB/dot.git"
     [sdk]="$GITHUB/sdk.git"
+    [sys]="$GITHUB/sys.git"
     [pylib]="$GITHUB/pylib.git"
 )
 
@@ -134,16 +137,18 @@ while true; do
             FLAGS[fun]=1    ;;
         -h | --help)
             usage
-            exit 0            ;;
+            exit 0          ;;
         -p | --python)
             FLAGS[py]=1     ;;
-        -S | --sdk)
+        --sdk)
             FLAGS[sdk]=1    ;;
-        -s | --school)
+        --school)
             FLAGS[schl]=1   ;;
+        --sys)
+            FLAGS[sys]=1    ;;
         --)
             shift
-            break             ;;
+            break           ;;
     esac
     shift
 done
@@ -229,9 +234,7 @@ if [[ ${FLAGS[dot]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
     git clone "${GIT_REPOS[dot]}" > /dev/null 2>&1
 
     echo "  Setting up 'dot'..."
-    shopt -s dotglob
-    find dot/bash -maxdepth 1 -type f -exec mv -i {} "$HOME" \;
-    find dot/ -maxdepth 1 -type f -exec mv -i {} "$HOME" \;
+    make --silent --directory=dot install
     rm -rf dot
     echo ""
 fi
@@ -283,6 +286,17 @@ if [[ ${FLAGS[py]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
 fi
 
 # ---------------------------------------------------------------------------- #
+#                                    school                                    #
+# ---------------------------------------------------------------------------- #
+
+# TESTS: ubuntu - OK, wsl - OK
+if [[ ${FLAGS[schl]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
+    echo -e "SCHOOL\n  Setting up 'school' scripts..."
+    sudo cp -f lesson /usr/local/bin  # 'lesson' script
+    echo ""
+fi
+
+# ---------------------------------------------------------------------------- #
 #                                     sdk                                      #
 # ---------------------------------------------------------------------------- #
 
@@ -297,15 +311,19 @@ if [[ ${FLAGS[sdk]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
     rm -rf sdk
     echo ""
 fi
-
 # ---------------------------------------------------------------------------- #
-#                                    school                                    #
+#                                     sys                                      #
 # ---------------------------------------------------------------------------- #
 
 # TESTS: ubuntu - OK, wsl - OK
-if [[ ${FLAGS[schl]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
-    echo -e "SCHOOL\n  Setting up 'school' scripts..."
-    sudo cp -f lesson /usr/local/bin  # 'lesson' script
+if [[ ${FLAGS[sys]} -eq 1 || ${FLAGS[all]} -eq 1 ]]; then
+
+    echo -e "SYS\n  Downloading 'sys' repository from git..."
+    git clone "${GIT_REPOS[sys]}" > /dev/null 2>&1
+
+    echo "  Setting up 'sys' scripts..."
+    make --silent --directory=sys install
+    rm -rf sys
     echo ""
 fi
 
