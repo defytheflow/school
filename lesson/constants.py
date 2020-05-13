@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+''' Constants definitions. '''
 
 
 AUTHOR = 'Artyom Danilov'
